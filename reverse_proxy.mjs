@@ -52,6 +52,8 @@ function cookieOf(cfg) {
 }
 const pool = []; // { email, cookie, blockedUntil, pro }
 let allAccounts = {};
+let warnedNoAccounts = false;
+let warnedNoConfig = false;
 
 /** 重建账号池：配置账号 + accounts.json 全量（--pro-only 只收 Pro）。同 cookie 保留冷却状态并刷新 pro 标记，供启动与热更新共用 */
 function reloadPool(reason) {
@@ -59,11 +61,15 @@ function reloadPool(reason) {
   if (existsSync(ACCOUNTS_FILE)) {
     try { accounts = JSON.parse(readFileSync(ACCOUNTS_FILE, 'utf8')); }
     catch (e) { console.log(`[警告] 读取 ${ACCOUNTS_FILE} 失败: ${e.message}`); return pool.length; }
+  } else if (!warnedNoAccounts) {
+    warnedNoAccounts = true;
+    console.log(`[账号库] 未找到 ${ACCOUNTS_FILE}：仓库不附带账号数据，注册成功后会自动生成`);
   }
   allAccounts = accounts;
 
   const entries = []; // [email, cookie, pro]
   try {
+    if (!existsSync(CONFIG)) { const e = new Error(`ENOENT: no such file or directory, open '${CONFIG}'`); e.code = 'ENOENT'; throw e; }
     const cfg = JSON.parse(readFileSync(CONFIG, 'utf8'));
     const cfgEmail = cfg.email || cfg.session?.user?.email || CONFIG.replace(/\.json$/i, '');
     // 配置账号的 pro 状态同样以 accounts.json 为准（不在库里视为 Free）
@@ -71,7 +77,14 @@ function reloadPool(reason) {
     if (!PRO_ONLY || cfgPro) entries.push([cfgEmail, cookieOf(cfg), cfgPro]);
     else console.log(`[池] --pro-only：配置账号 ${cfgEmail} 非 Pro/未检测，已跳过`);
   } catch (e) {
-    console.log(`[警告] 读取配置 ${CONFIG} 失败: ${e.message}`);
+    if (e.code === 'ENOENT' || /ENOENT/.test(String(e.message))) {
+      if (!warnedNoConfig) {
+        warnedNoConfig = true;
+        console.log(`[配置] 未找到 ${CONFIG}（配置文件含会话 cookie，不随仓库分发）：本次仅使用 ${ACCOUNTS_FILE} 里的账号；需要它可在 GUI「批量注册 → 配置编辑」新建，或用 --config 指定文件`);
+      }
+    } else {
+      console.log(`[配置] ${CONFIG} 解析失败: ${e.message}（已跳过该配置文件）`);
+    }
   }
   let proSkipped = 0;
   for (const [email, acc] of Object.entries(allAccounts)) {
@@ -106,7 +119,11 @@ function reloadPool(reason) {
   return pool.length;
 }
 reloadPool('启动');
-if (!pool.length) { console.log('[错误] 没有任何可用账号（缺 session cookie），请先执行登录。'); process.exit(1); }
+if (!pool.length) {
+  console.log(`[错误] 账号池为空：${ACCOUNTS_FILE} 与 ${CONFIG} 里都没有带 session cookie 的账号。`);
+  console.log('       请先在 GUI 完成注册（或放置 accounts.json / 用 --config 指定已有配置），再重启反代。');
+  process.exit(1);
+}
 
 // mtime 轮询：注册完成入池后自动热更新账号池，无需重启反代（GUI 任务完成时还会主动 POST /admin/reload）
 const mtimeOf = (f) => { try { return existsSync(f) ? statSync(f).mtimeMs : 0; } catch { return 0; } };
@@ -795,7 +812,7 @@ const server = createServer(async (req, res) => {
 
   if (req.method === 'GET' && (path === '/' || path === '/health')) {
     res.writeHead(200, { 'content-type': 'application/json' });
-    res.end(JSON.stringify({ status: 'ok', service: 'mistral-reverse-proxy', conversations: conversations.size, config: CONFIG }));
+    res.end(JSON.stringify({ status: 'ok', service: 'mistral-reverse-proxy', conversations: conversations.size, config: existsSync(CONFIG) ? CONFIG : null }));
     return;
   }
   // 账号池状态（GUI 轮询用；pro 字段与 Pro/Free 计数对应「Pro 优先轮换」调度观测）
@@ -1002,7 +1019,7 @@ server.listen(PORT, HOST, () => {
   console.log(`  地址:    http://${HOST}:${PORT}/v1`);
   console.log(`  端点:    POST /v1/chat/completions   GET /v1/models`);
   console.log('  账号池:  accounts.json 变更自动热更新（约 2.5s 轮询；GUI 注册完成后自动入池）');
-  console.log(`  配置:    ${CONFIG}`);
+  console.log(`  配置:    ${existsSync(CONFIG) ? CONFIG : '未使用（仅 accounts.json 的账号池）'}`);
   console.log(`  API key: ${API_KEY_ARG ? '已设置（--api-key 参数）' : apiKey ? '已设置（proxy_key.txt，可在 GUI「用量看板」修改，热更新）' : '未设置（/v1/* 不校验；GUI 首次启动会自动生成）'}`);
   const bannerPro = pool.filter((a) => a.pro === true).length;
   console.log(`  账号池:  ${pool.length} 个（Pro ${bannerPro} / Free ${pool.length - bannerPro}；调度: Pro 优先轮换，Free 兜底，429 自动切换）`);

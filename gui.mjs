@@ -522,8 +522,10 @@ function buildRun(action, p) {
   }
   if (action === 'proxy') {
     const port = Math.min(65535, Math.max(1024, parseInt(p.port || '8899', 10) || 8899));
-    const cfg = p.config && configList().some((c) => c.file === p.config) ? p.config : 'test_pipe_config.json';
-    const args = ['--config', cfg, '--port', String(port)];
+    // 只传真实存在的配置文件：缺失时反代仅用 accounts.json 的账号池（仓库不附带配置文件）
+    const cfg = p.config && configList().some((c) => c.file === p.config) ? p.config : null;
+    const args = ['--port', String(port)];
+    if (cfg) args.unshift('--config', cfg);
     if (p.proOnly) args.push('--pro-only');
     // 客户端形态：client_profile.txt = 'desktop' 时 UA 带 LeChat-Desktop 标记（运行中也可热切换）
     try { if (readFileSync('client_profile.txt', 'utf8').trim() === 'desktop') args.push('--client-profile', 'desktop'); } catch { /* 默认 web */ }
@@ -1015,14 +1017,15 @@ async function autoStartProxy() {
     const cfg = configs.some((c) => c.file === 'test_pipe_config.json')
       ? 'test_pipe_config.json'
       : (configs[0]?.file || null);
-    if (!cfg) {
-      log('未发现配置文件（mistral_config.json / test_*_config.json），跳过自动启动反代');
+    const accCount = Object.keys(readAccounts()).length;
+    if (!cfg && !accCount) {
+      log('没有账号也没有配置文件（先注册账号或新建配置），跳过自动启动反代');
       return;
     }
-    const built = buildRun('proxy', { config: cfg, port: String(AUTO_PROXY_PORT), proOnly: false });
+    const built = buildRun('proxy', { config: cfg || undefined, port: String(AUTO_PROXY_PORT), proOnly: false });
     const t = spawnTask('proxy', built.script, built.args);
     t.meta = built.meta || null;
-    log(`自动启动反代: 端口 ${AUTO_PROXY_PORT}（任务 ${t.id}，config=${cfg}）`);
+    log(`自动启动反代: 端口 ${AUTO_PROXY_PORT}（任务 ${t.id}，config=${cfg || '未使用（仅 accounts.json）'}）`);
   } catch (e) {
     log('自动启动反代失败:', e.message);
   }

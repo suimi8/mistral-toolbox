@@ -106,7 +106,7 @@ node gui.mjs
 
 ## 对话反代（OpenAI 兼容）
 
-随 GUI 自动开启，默认 `http://127.0.0.1:8899/v1`。
+随 GUI 自动开启，默认 `http://127.0.0.1:8899/v1`；优先使用已有配置文件，没有配置文件时仅用 `accounts.json` 的账号池。
 
 | 端点 | 说明 |
 |---|---|
@@ -255,6 +255,7 @@ GUI 账号库每行的「🖥 Vibe」，或单账号页「切换到该账号」�
 
 **启动后浏览器打不开 / 端口被占？** 用 `node gui.mjs --port <端口>` 换端口；`启动GUI.bat` 会给出「杀掉占用进程 / 退出 / 打开已运行实例」三个选项。
 
+**启动时报 `test_pipe_config.json` / `accounts.json` 找不到（ENOENT）？** 仓库按设计不附带这两个文件（配置文件含会话 cookie、`accounts.json` 含账号，均已列入 `.gitignore`）。反代会给出提示并只使用已有账号；首次使用请先在 GUI 完成一次注册（自动生成 `accounts.json`），或在「批量注册 → 配置编辑」新建配置，也可以用 `--config` 指定自己的配置文件。
 **反代返回 401？** `/v1/*` 需要 `proxy_key.txt` 里的 key（`Authorization: Bearer`、`x-api-key` 或 `?key=`）。GUI 未生成过 key 时该文件不存在，此时不校验。
 
 **反代返回 403 且提示 cf_challenged？** 出口 IP 被 Cloudflare 风控，换出口 IP 或稍后重试。
