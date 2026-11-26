@@ -36,6 +36,12 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 process.chdir(ROOT);
 
+/** 应用版本：以 package.json 为准，界面上直接显示 */
+const APP_VERSION = (() => {
+  try { return JSON.parse(readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version || '0.0.0'; }
+  catch { return '0.0.0'; }
+})();
+
 const argv = process.argv.slice(2);
 const argOf = (key, def) => {
   const i = argv.indexOf(key);
@@ -619,7 +625,9 @@ function serveHtml(res) {
     res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
     return res.end('gui.html 不存在');
   }
-  const html = readFileSync(fp, 'utf8').replaceAll('__PORT__', String(PORT));
+  const html = readFileSync(fp, 'utf8')
+    .replaceAll('__PORT__', String(PORT))
+    .replaceAll('__VERSION__', APP_VERSION);
   res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' });
   res.end(html);
 }
@@ -790,7 +798,7 @@ function overview() {
           failed: resultsView().data.failed,
         }
       : null,
-    env: { node: process.version, platform: process.platform },
+    env: { node: process.version, platform: process.platform, version: APP_VERSION },
   };
 }
 

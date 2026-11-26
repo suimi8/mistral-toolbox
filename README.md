@@ -2,6 +2,8 @@
 
 面向 Mistral Le Chat（chat.mistral.ai）的本地自动化工具集：**批量注册、卡池管理、账号库、用量看板与 OpenAI 兼容反代**，全部功能集中在一个本地 Web GUI 里。
 
+当前版本 **v1.1.0** · 见 [更新日志](CHANGELOG.md)
+
 > ⚠️ 仅供学习研究：本项目涉及批量注册、绑卡探测与优惠码兑换，可能违反 Mistral / Stripe 的服务条款；请自行评估风险，后果自负。仓库不含任何真实账号、卡号或会话数据。
 
 ## 目录
@@ -237,6 +239,7 @@ GUI 账号库每行的「🖥 Vibe」，或单账号页「切换到该账号」�
 |---|---|
 | `gui.mjs` | GUI 服务端（`node:http`，仅监听 127.0.0.1） |
 | `gui.html` | 前端单页（深色控制台，无外部资源） |
+| `CHANGELOG.md` | 版本更新记录 |
 | `启动GUI.bat` | 双击启动器 |
 | `batch_register.mjs` | 批量注册调度（worker 池、卡池分配、日志、`batch_results.json`） |
 | `pipeline.mjs` | 单账号一条龙 |

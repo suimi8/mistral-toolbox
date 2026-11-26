@@ -1,6 +1,6 @@
 {
   "name": "mistral-toolbox",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Mistral Le Chat 本地控制台：批量注册 + 卡池管理 + 账号库 + 用量看板 + OpenAI 兼容反代",
   "main": "gui.mjs",
   "scripts": {
