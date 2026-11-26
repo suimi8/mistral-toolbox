@@ -79,7 +79,7 @@ node gui.mjs
 | 不自动开浏览器 | `node gui.mjs --no-open` |
 | 不自动拉起反代 | `node gui.mjs --no-autostart` |
 
-**环境要求**：Node.js ≥ 22.19、Windows（浏览器进程与进程树停止使用 Windows 命令）。
+**环境要求**：Node.js ≥ 22.19、Windows（浏览器打开与进程树停止使用 Windows 命令）。首次启动若没有任何配置文件，会自动生成空白的 `mistral_config.json`，在「批量注册 → 配置编辑」里填卡号/地址即可开始注册。
 
 ## 首次运行要准备的文件
 

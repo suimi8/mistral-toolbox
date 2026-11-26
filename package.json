@@ -1,7 +1,7 @@
 {
-  "name": "mistral",
+  "name": "mistral-toolbox",
   "version": "1.0.0",
-  "description": "Mistral 控制台：批量注册 + 账号库 + 对话反代 + Hub 聚合网关（单 UI）",
+  "description": "Mistral Le Chat 本地控制台：批量注册 + 卡池管理 + 账号库 + 用量看板 + OpenAI 兼容反代",
   "main": "gui.mjs",
   "scripts": {
     "gui": "node gui.mjs",
@@ -10,5 +10,22 @@
   "license": "ISC",
   "dependencies": {
     "undici": "^8.13.1"
-  }
+  },
+  "engines": {
+    "node": ">=22.19"
+  },
+  "os": [
+    "win32"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/suimi8/mistral-toolbox.git"
+  },
+  "keywords": [
+    "mistral",
+    "le-chat",
+    "openai-compatible",
+    "reverse-proxy",
+    "automation"
+  ]
 }

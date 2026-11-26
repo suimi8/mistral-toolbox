@@ -991,6 +991,21 @@ async function handleProfileSave(req, res) {
 /* ============================== 启动即自动开启反代 ============================== */
 const AUTO_PROXY_PORT = 8899;
 
+/** 仓库不附带配置文件：一个都没有时生成空白配置，用户直接在 GUI 里填卡号/地址即可注册 */
+function ensureBlankConfig() {
+  if (configList().length) return null;
+  const file = 'mistral_config.json';
+  const blank = {
+    version: 1,
+    card: { number: '', cvc: '', exp_month: '', exp_year: '' },
+    address: { address_line1: '', city: '', zipcode: '', country: 'GB' },
+    promo_code: 'MISTRALVIBE', registered_at: '', email: '', password: '', first: '', last: '',
+    session: { cookies: {}, saved_at: '' },
+  };
+  writeConfigFull(file, blank);
+  return file;
+}
+
 /**
  * GUI 启动即自动拉起反代（server.listen 回调里异步调用，不阻塞 openBrowser）。
  * 边界：若 8899 已有本项目反代（外部启动，非本 GUI 任务），只打日志跳过——
@@ -1018,8 +1033,10 @@ async function autoStartProxy() {
       ? 'test_pipe_config.json'
       : (configs[0]?.file || null);
     const accCount = Object.keys(readAccounts()).length;
-    if (!cfg && !accCount) {
-      log('没有账号也没有配置文件（先注册账号或新建配置），跳过自动启动反代');
+    let cfgHasCookie = false;
+    try { cfgHasCookie = Object.keys(readConfigFull(cfg || '')?.session?.cookies || {}).length > 0; } catch { /* 无配置文件 */ }
+    if (!accCount && !cfgHasCookie) {
+      log('账号池为空（还没有带会话的账号），跳过自动启动反代；完成首次注册后点「重启反代」即可');
       return;
     }
     const built = buildRun('proxy', { config: cfg || undefined, port: String(AUTO_PROXY_PORT), proOnly: false });
@@ -1044,7 +1061,7 @@ server.on('error', async (e) => {
         process.exit(0);
       }
     } catch { /* 占用者不是我们的实例 */ }
-    console.error(`[GUI] 端口 ${PORT} 已被占用（占用者不是本项目实例），请换端口：node gui.mjs --port 8792`);
+    console.error(`[GUI] 端口 ${PORT} 已被占用（占用者不是本项目实例），请换端口：node gui.mjs --port ${PORT + 1}`);
     console.error(`[GUI] 或双击 启动GUI.bat，由启动器提供「关闭旧进程并重启 / 直接退出 / 打开当前服务」菜单`);
     process.exit(1);
   }
@@ -1052,6 +1069,10 @@ server.on('error', async (e) => {
 });
 
 server.listen(PORT, HOST, () => {
+  try {
+    const created = ensureBlankConfig();
+    if (created) console.log(`[配置] 未发现配置文件，已生成空白 ${created}（在「批量注册 → 配置编辑」里填卡号/地址后即可注册）`);
+  } catch (e) { console.error('[配置] 生成空白配置失败:', e.message); }
   const url = `http://${HOST}:${PORT}`;
   console.log('============================================================');
   console.log('  Mistral 控制台 · GUI');
