@@ -32,7 +32,7 @@
  *   node vibe_login.mjs --email a@b.c [--password xxx] --apply
  *   node vibe_login.mjs --config f.json --apply --no-restart     # 只写配置，稍后自己重开 Vibe
  *   node vibe_login.mjs --config f.json --dry-run                # 只验证登录，什么都不写
- *   node vibe_login.mjs --exe "D:\...\Vibe.exe" --user-data-dir "D:\tmp\profile" --check
+ *   node vibe_login.mjs --exe "<Vibe 安装目录>\Vibe.exe" --user-data-dir "%TEMP%\vibe-profile" --check
  */
 import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync, copyFileSync, renameSync, rmSync, readdirSync, statSync } from 'node:fs';
