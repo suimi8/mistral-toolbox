@@ -7,6 +7,7 @@
 ## 目录
 
 - [特性](#特性)
+- [界面预览](#界面预览)
 - [快速开始](#快速开始)
 - [首次运行要准备的文件](#首次运行要准备的文件)
 - [GUI 功能](#gui-功能)
@@ -35,6 +36,30 @@
 | 对话反代 | OpenAI 兼容 `/v1/chat/completions`，多账号池、429 自动换号、**tools / function calling** |
 | 用量看板 | 请求记录 + 账号报表两张表，额度、缓存命中、速度、首字耗时 |
 | 账号资产 | Pro 检测、额度体检、会话复用、Vibe 桌面端账号一键切换 |
+
+## 界面预览
+
+> 以下截图使用虚构演示数据（`demo0x@example.com`、占位 API key），不含任何真实账号或卡号。
+
+### 批量注册
+
+![批量注册](docs/screenshots/01-batch.png)
+
+### 卡池管理（含邮箱站点 Token 池）
+
+![卡池管理](docs/screenshots/02-cards.png)
+
+### 账号库
+
+![账号库](docs/screenshots/03-accounts.png)
+
+### 用量看板
+
+![用量看板](docs/screenshots/04-usage.png)
+
+### 运行日志
+
+![运行日志](docs/screenshots/05-logs.png)
 
 ## 快速开始
 
