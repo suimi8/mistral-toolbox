@@ -1,0 +1,5 @@
+# feimao_tokens.txt — 肥猫猫邮箱（zjkdongao.cn）登录态 token 池
+# 每行一个 token（# 开头为注释）；注册收验证码时按顺序轮询，401/403 或限流自动跳过
+# 获取方式：浏览器登录 zjkdongao.cn → F12 任意 mail-api 请求 →
+#           Request Headers 里 Authorization: Bearer <token> 的 <token> 部分
+# 复制本文件为 feimao_tokens.txt 后逐行填写

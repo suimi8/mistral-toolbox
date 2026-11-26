@@ -1,0 +1,1769 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mistral 控制台</title>
+<style>
+:root{
+  --bg:#0d0f14; --panel:#141821; --panel-2:#1a1f2b; --border:#262c3a;
+  --text:#e9edf5; --muted:#8a93a8; --accent:#ff7a1a; --accent-soft:rgba(255,122,26,.14);
+  --green:#3ddc97; --red:#ff5d6c; --yellow:#ffc857; --blue:#5aa9ff; --radius:14px;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{
+  margin:0; color:var(--text); font:14px/1.5 "Segoe UI","Microsoft YaHei",system-ui,-apple-system,sans-serif;
+  background:radial-gradient(1100px 560px at 82% -12%,rgba(255,122,26,.09),transparent 62%),
+             radial-gradient(900px 500px at -10% 110%,rgba(90,169,255,.05),transparent 60%),var(--bg);
+}
+#app{display:flex;height:100vh;overflow:hidden}
+
+/* ---------- 侧栏 ---------- */
+.sidebar{
+  width:228px;flex-shrink:0;display:flex;flex-direction:column;gap:20px;
+  padding:20px 14px;border-right:1px solid var(--border);background:rgba(17,20,28,.92);
+}
+.brand{display:flex;align-items:center;gap:11px;padding:2px 6px}
+.logo{
+  width:38px;height:38px;border-radius:11px;display:grid;place-items:center;
+  font-weight:800;font-size:19px;color:#1a1206;
+  background:linear-gradient(135deg,#ff7a1a,#ffb35c);
+  box-shadow:0 6px 18px rgba(255,122,26,.35);
+}
+.brand-name{font-weight:700;font-size:15px;letter-spacing:.2px}
+.brand-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.nav{display:flex;flex-direction:column;gap:4px}
+.nav-item{
+  display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border:0;border-radius:10px;
+  background:transparent;color:var(--muted);font:inherit;font-size:13.5px;text-align:left;cursor:pointer;
+  transition:background .15s,color .15s;border-left:2px solid transparent;
+}
+.nav-item .ico{width:18px;text-align:center;font-size:14px}
+.nav-item:hover{background:rgba(255,255,255,.04);color:var(--text)}
+.nav-item.active{
+  background:linear-gradient(90deg,rgba(255,122,26,.15),rgba(255,122,26,.03));
+  color:#ffb37a;border-left-color:var(--accent);
+}
+.side-foot{margin-top:auto;display:flex;flex-direction:column;gap:6px;padding:0 6px}
+.side-foot .pill{font-size:11.5px;color:var(--muted)}
+.small{font-size:12px}
+.muted{color:var(--muted)}
+
+/* ---------- 主区 ---------- */
+main{flex:1;min-width:0;display:flex;flex-direction:column}
+header{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:18px 24px 14px;border-bottom:1px solid var(--border);background:rgba(13,15,20,.55);backdrop-filter:blur(6px);
+}
+header h1{margin:0;font-size:19px;letter-spacing:.2px}
+header p{margin:3px 0 0;font-size:12.5px}
+.pills{display:flex;gap:8px;flex-shrink:0}
+.pill{
+  display:flex;align-items:center;gap:6px;padding:7px 11px;border:1px solid var(--border);
+  border-radius:99px;background:var(--panel);font-size:12px;color:var(--muted);
+}
+.pill b{color:var(--text);font-size:13px}
+.dot{width:8px;height:8px;border-radius:50%;background:#3a4152;display:inline-block}
+.dot.on{background:var(--green);box-shadow:0 0 0 4px rgba(61,220,151,.15);animation:pulse 1.6s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 7px rgba(61,220,151,.05)}}
+
+.content{flex:1;overflow:auto;padding:18px 24px 30px}
+.view{display:flex;flex-direction:column;gap:16px;max-width:1120px}
+.card{
+  background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px 18px;box-shadow:0 10px 30px rgba(0,0,0,.18);
+}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.card-head h2{margin:0;font-size:14.5px;font-weight:600;letter-spacing:.2px}
+.row{display:flex;align-items:center;gap:10px}
+
+/* ---------- 表单 ---------- */
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:12px}
+label.field{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--muted)}
+input[type=text],input[type=number],select,textarea{
+  width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:9px;
+  background:#10131b;color:var(--text);font:inherit;font-size:13px;outline:none;transition:border .15s,box-shadow .15s;
+}
+input:focus,select:focus,textarea:focus{border-color:rgba(255,122,26,.6);box-shadow:0 0 0 3px rgba(255,122,26,.12)}
+input[readonly]{color:var(--muted)}
+.checks{display:flex;flex-wrap:wrap;gap:16px;margin:14px 0 4px}
+.check{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);cursor:pointer;user-select:none}
+.check input{accent-color:var(--accent);width:15px;height:15px;cursor:pointer}
+.actions{display:flex;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap}
+.spacer{flex:1}
+
+/* ---------- 按钮 ---------- */
+.btn{
+  display:inline-flex;align-items:center;gap:7px;padding:10px 17px;border-radius:10px;border:1px solid transparent;
+  font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;transition:transform .12s,filter .15s,background .15s;
+}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:linear-gradient(135deg,#ff7a1a,#ffa14d);color:#1c1206;box-shadow:0 8px 22px rgba(255,122,26,.28)}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn.ghost{background:transparent;border-color:var(--border);color:var(--text)}
+.btn.ghost:hover{background:rgba(255,255,255,.05)}
+.btn.danger{background:rgba(255,93,108,.12);border-color:rgba(255,93,108,.35);color:#ff8a95}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;filter:none}
+.mini{
+  padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:transparent;
+  color:var(--muted);font:inherit;font-size:12px;cursor:pointer;transition:background .15s,color .15s;
+}
+.mini:hover{background:rgba(255,255,255,.05);color:var(--text)}
+.mini.check{border:0;display:inline-flex;align-items:center;gap:6px}
+
+/* ---------- 进度 ---------- */
+.progress{height:10px;background:#1b2030;border-radius:99px;overflow:hidden;margin:4px 0 14px}
+.bar{height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#ff7a1a,#ffb35c);transition:width .35s}
+.metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.metric{background:#11141c;border:1px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:1px}
+.metric span{font-size:11px;letter-spacing:.3px}
+.metric b{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
+.c-green{color:var(--green)} .c-red{color:var(--red)} .c-yellow{color:var(--yellow)} .c-blue{color:var(--blue)} .c-orange{color:var(--accent)}
+
+/* ---------- 控制台 ---------- */
+.console{
+  height:320px;overflow:auto;background:#090b10;border:1px solid #1b2030;border-radius:10px;
+  padding:12px 14px;font:12.5px/1.6 ui-monospace,Consolas,"Courier New",monospace;color:#cfd6e4;
+}
+.console .ln{white-space:pre-wrap;word-break:break-all}
+.console .ln.ok{color:#3ddc97}
+.console .ln.err{color:#ff6b7a}
+.console .ln.sys{color:#ffab5e}
+.console:empty::before{content:"等待输出…";color:#3d4557}
+
+/* ---------- 表格 ---------- */
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{
+  text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);
+  color:var(--muted);font-size:11px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;white-space:nowrap;
+}
+.tbl td{padding:9px 10px;border-bottom:1px solid #1b2030;vertical-align:top}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tbody tr:hover td{background:rgba(255,255,255,.02)}
+.mono{font-family:ui-monospace,Consolas,monospace;font-size:12.5px}
+.empty{padding:22px;text-align:center;color:var(--muted);font-size:13px}
+.badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11.5px;background:rgba(255,255,255,.06);color:var(--muted)}
+.badge.ok{background:rgba(61,220,151,.12);color:var(--green)}
+.badge.bad{background:rgba(255,93,108,.12);color:#ff8a95}
+
+/* ---------- 卡片管理 ---------- */
+textarea{resize:vertical;min-height:240px;font-family:ui-monospace,Consolas,monospace;font-size:12.5px;line-height:1.7}
+.hint{
+  border:1px dashed var(--border);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--muted);
+  background:rgba(255,255,255,.015);line-height:1.7;
+}
+.hint code{color:#ffb37a;background:rgba(255,122,26,.08);padding:1px 5px;border-radius:5px;font-size:11.5px}
+.err-list{margin-top:10px;font-size:12px;color:#ff8a95;line-height:1.9}
+.err-list .muted{color:var(--muted)}
+
+/* ---------- 日志 ---------- */
+.logs-grid{display:grid;grid-template-columns:280px 1fr;gap:16px;align-items:start}
+.log-list{display:flex;flex-direction:column;gap:6px;max-height:420px;overflow:auto}
+.log-item{
+  display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:9px 11px;border-radius:9px;
+  border:1px solid var(--border);background:transparent;color:var(--text);font:inherit;font-size:12.5px;cursor:pointer;text-align:left;
+}
+.log-item:hover{background:rgba(255,255,255,.04)}
+.log-item.active{border-color:rgba(255,122,26,.5);background:var(--accent-soft)}
+.log-view{
+  height:420px;overflow:auto;background:#090b10;border:1px solid #1b2030;border-radius:10px;
+  padding:12px 14px;font:12px/1.65 ui-monospace,Consolas,monospace;color:#cfd6e4;white-space:pre-wrap;word-break:break-all;margin:0;
+}
+.log-view:empty::before{content:"选择左侧日志查看内容";color:#3d4557}
+
+/* ---------- 其他 ---------- */
+.pill-inline{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted)}
+.url-box{
+  display:flex;align-items:center;gap:8px;background:#10131b;border:1px solid var(--border);
+  border-radius:9px;padding:8px 10px;font-family:ui-monospace,Consolas,monospace;font-size:12.5px;color:#ffb37a;
+}
+#toasts{position:fixed;right:18px;bottom:18px;display:flex;flex-direction:column;gap:8px;z-index:50}
+.toast{
+  padding:10px 14px;border-radius:10px;background:#1c2130;border:1px solid var(--border);color:var(--text);
+  font-size:13px;box-shadow:0 12px 30px rgba(0,0,0,.35);animation:in .18s ease-out;
+}
+.toast.ok{border-color:rgba(61,220,151,.4)}
+.toast.err{border-color:rgba(255,93,108,.45)}
+.toast.out{opacity:0;transform:translateY(6px);transition:all .25s}
+@keyframes in{from{opacity:0;transform:translateY(6px)}}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#242a38;border-radius:99px;border:2px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-thumb:hover{background:#2e3547;border:2px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-corner{background:transparent}
+@media (max-width:900px){.sidebar{width:64px;padding:14px 8px}.brand-sub,.nav-item span:not(.ico),.side-foot{display:none}}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">M</div>
+      <div>
+        <div class="brand-name">Mistral 控制台</div>
+        <div class="brand-sub">MISTRALVIBE 自动化</div>
+      </div>
+    </div>
+    <nav class="nav">
+      <button class="nav-item active" data-view="batch"><span class="ico">⚡</span><span>批量注册</span></button>
+      <button class="nav-item" data-view="cards"><span class="ico">💳</span><span>卡池管理</span></button>
+      <button class="nav-item" data-view="accounts"><span class="ico">👥</span><span>账号库</span></button>
+      <button class="nav-item" data-view="usage"><span class="ico">📈</span><span>用量看板</span></button>
+      <button class="nav-item" data-view="logs"><span class="ico">📜</span><span>运行日志</span></button>
+    </nav>
+    <div class="side-foot">
+      <div class="pill">node <b id="footNode">–</b></div>
+      <div class="pill" id="footAddr">127.0.0.1:__PORT__</div>
+      <div class="small muted">仅监听本机 · 关闭窗口即停止</div>
+    </div>
+  </aside>
+
+  <main>
+    <header>
+      <div>
+        <h1 id="viewTitle">批量注册</h1>
+        <p class="muted" id="viewSub">按数量与并发批量跑一条龙（注册 → 地址 → 绑卡 → 兑换）</p>
+      </div>
+      <div class="pills">
+        <div class="pill"><b id="statAccounts">0</b> 账号</div>
+        <div class="pill"><b id="statPro" class="c-green">0</b> Pro</div>
+        <div class="pill"><b id="statCards">0</b> 卡可用</div>
+        <div class="pill"><span class="dot" id="statTaskDot"></span><b id="statTask">空闲</b></div>
+      </div>
+    </header>
+
+    <div class="content">
+      <!-- ================= 批量注册 ================= -->
+      <section class="view" id="view-batch">
+        <div class="card">
+          <div class="card-head">
+            <h2>批量注册</h2>
+            <div class="muted small">batch_register.mjs · 每任务独立配置与日志</div>
+          </div>
+          <div class="form-grid">
+            <label class="field">注册数量
+              <input id="bCount" type="number" min="1" value="5">
+            </label>
+            <label class="field">并发数（1-10）
+              <input id="bConc" type="number" min="1" max="10" value="3">
+            </label>
+            <label class="field">优惠码
+              <input id="bPromo" type="text" value="MISTRALVIBE">
+            </label>
+            <label class="field">代理（可选）
+              <input id="bProxy" type="text" placeholder="http://127.0.0.1:7897">
+            </label>
+            <label class="field">单任务超时（秒）
+              <input id="bTimeout" type="number" min="60" value="1500">
+            </label>
+            <label class="field">卡池来源
+              <input type="text" value="cards.txt（自动收集 cards*.txt）" readonly>
+            </label>
+          </div>
+          <div class="checks">
+            <label class="check"><input type="checkbox" id="bSkipAddr">跳过地址填充</label>
+            <label class="check"><input type="checkbox" id="bSkipCard">跳过绑卡</label>
+            <label class="check"><input type="checkbox" id="bSkipRedeem">跳过兑换</label>
+            <label class="check"><input type="checkbox" id="bDry">仅演练（dry-run，不真实注册）</label>
+          </div>
+          <div class="actions">
+            <button class="btn primary" id="btnBatchStart">▶ 开始批量注册</button>
+            <button class="btn danger" id="btnBatchStop" disabled>⏹ 停止</button>
+            <div class="spacer"></div>
+            <div class="muted small" id="bHint"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h2>进度</h2>
+            <div class="muted small" id="bPhase">等待开始</div>
+          </div>
+          <div class="progress"><div class="bar" id="bBar"></div></div>
+          <div class="metrics">
+            <div class="metric"><span class="muted">总数</span><b id="mTotal">–</b></div>
+            <div class="metric"><span class="muted">运行中</span><b id="mRun" class="c-blue">0</b></div>
+            <div class="metric"><span class="muted">成功</span><b id="mOk" class="c-green">0</b></div>
+            <div class="metric"><span class="muted">失败</span><b id="mFail" class="c-red">0</b></div>
+            <div class="metric"><span class="muted">Pro 入池</span><b id="mPro" class="c-green">0</b></div>
+            <div class="metric"><span class="muted">耗时</span><b id="mTime">–</b></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h2>实时日志</h2>
+            <div class="row">
+              <button class="mini" id="btnClear">清空</button>
+              <label class="mini check"><input type="checkbox" id="chkFollow" checked>自动滚动</label>
+            </div>
+          </div>
+          <div class="console" id="batchConsole"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h2>卡号 / 配置编辑（单/批量共用）</h2>
+            <div class="muted small">对应菜单【4】设卡号：保存后批量注册与一条龙都会用这张卡</div>
+          </div>
+          <div class="form-grid">
+            <label class="field">配置文件
+              <select id="kConfig"></select>
+            </label>
+            <label class="field">卡号（留空 = 保持原值）
+              <input id="kNumber" type="text" placeholder="卡号" autocomplete="off">
+            </label>
+            <label class="field">有效期 MM
+              <input id="kMonth" type="text" placeholder="01" maxlength="2" autocomplete="off">
+            </label>
+            <label class="field">有效期 YYYY（也接受 YY）
+              <input id="kYear" type="text" placeholder="2031" maxlength="4" autocomplete="off">
+            </label>
+            <label class="field">CVC
+              <input id="kCvc" type="text" placeholder="030" maxlength="4" autocomplete="off">
+            </label>
+            <label class="field">名 First
+              <input id="kFirst" type="text" placeholder="Alan" autocomplete="off">
+            </label>
+            <label class="field">姓 Last
+              <input id="kLast" type="text" placeholder="Smith" autocomplete="off">
+            </label>
+            <label class="field">优惠码
+              <input id="kPromo" type="text" placeholder="MISTRALVIBE" autocomplete="off">
+            </label>
+          </div>
+          <div class="actions">
+            <button class="btn primary" id="btnCardSave">💾 保存卡号与配置</button>
+            <button class="btn ghost" id="btnCardLoad">↺ 重新载入</button>
+            <span class="muted small" id="cardMsg"></span>
+          </div>
+          <div class="hint" style="margin-top:12px">
+            保存时会做 <b>Luhn 校验</b>，卡号非法会被直接拒绝；配置以「临时文件 → 原子替换」写入，不会写坏原 JSON。
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h2>单账号操作</h2>
+            <div class="muted small">pipeline.mjs / mistral_login.mjs / retest_pending.mjs · 批量注册之外的单独补号 / 登录 / 复检入口</div>
+          </div>
+          <div class="form-grid">
+            <label class="field">配置文件
+              <select id="sConfig"></select>
+            </label>
+            <label class="field">代理（可选，一条龙 / 登录出口）
+              <input id="sProxy" type="text" placeholder="http://127.0.0.1:7897">
+            </label>
+          </div>
+          <div class="checks">
+            <label class="check"><input type="checkbox" id="sOpen">完成后打开已登录网页（--open）</label>
+            <label class="check"><input type="checkbox" id="sFresh">强制全新登录（默认先复用 90 天有效会话，防限流）</label>
+          </div>
+          <div class="actions">
+            <button class="btn primary" id="btnPipe">🚀 注册一条龙</button>
+            <button class="btn ghost" id="btnLogin">🔑 登录并导出 cookie</button>
+            <button class="btn ghost" id="btnRetest">♻ 重测冷却卡</button>
+            <button class="btn ghost" id="btnProOne">🧪 检测该账号 Pro</button>
+            <button class="btn ghost" id="btnVibeOne">🖥 切换到该账号（Vibe）</button>
+            <div class="spacer"></div>
+            <button class="btn danger" id="btnSingleStop" disabled>⏹ 停止</button>
+          </div>
+          <div class="hint" style="margin-top:12px">
+            一条龙会<b>注册新账号</b>（邮箱 + 验证码 → 地址 → 绑卡 → 兑换 → 登记 accounts.json）。
+            「打开网页」会用 CDP 启动本机 Edge（独立 profile，首次启动会自动创建 cdp_profile）。
+          </div>
+          <div class="card-head" style="margin-top:14px"><h2>输出</h2><span class="muted small">单账号任务实时输出</span></div>
+          <div class="console" id="singleConsole"></div>
+        </div>
+
+        <div class="card" id="batchResultCard" hidden>
+          <div class="card-head">
+            <h2>本次结果</h2>
+            <div class="row">
+              <span class="muted small" id="bResultMeta"></span>
+              <button class="mini" id="btnRefreshResult">刷新</button>
+            </div>
+          </div>
+          <div id="bResultBody"></div>
+        </div>
+      </section>
+
+      <!-- ================= 卡池管理 ================= -->
+      <section class="view" id="view-cards" hidden>
+        <div class="card">
+          <div class="card-head">
+            <h2>单卡录入</h2>
+            <div class="muted small">逐项填写、实时校验，通过后一键加入卡池并保存到 cards.txt</div>
+          </div>
+          <div class="form-grid">
+            <label class="field">卡号（12-19 位数字，自动 Luhn 校验）
+              <input id="ncNum" type="text" inputmode="numeric" placeholder="卡号" autocomplete="off">
+              <span class="small" id="ncNumMsg"></span>
+            </label>
+            <label class="field">月份 MM（01-12）
+              <input id="ncMM" type="text" inputmode="numeric" maxlength="2" placeholder="01" autocomplete="off">
+              <span class="small" id="ncMMMsg"></span>
+            </label>
+            <label class="field">年份（YY 或 YYYY，如 31 或 2031）
+              <input id="ncYY" type="text" inputmode="numeric" maxlength="4" placeholder="2031" autocomplete="off">
+              <span class="small" id="ncYYMsg"></span>
+            </label>
+            <label class="field">CVC（背面 3-4 位）
+              <input id="ncCVC" type="text" inputmode="numeric" maxlength="4" placeholder="306" autocomplete="off">
+              <span class="small" id="ncCVCMsg"></span>
+            </label>
+          </div>
+          <div class="actions">
+            <button class="btn primary" id="btnNcAdd">➕ 校验并加入卡池</button>
+            <span class="muted small" id="ncMsg"></span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <h2>卡池管理</h2>
+            <div class="muted small">保存后写入 <span class="mono">cards.txt</span>，批量注册自动读取</div>
+          </div>
+          <textarea id="cText" spellcheck="false" placeholder="批量粘贴：每行一张卡，竖线分隔，顺序固定为 卡号|MM|YYYY|CVC"></textarea>
+          <div class="actions">
+            <button class="btn primary" id="btnCardsSave">✓ 校验并保存</button>
+            <button class="btn ghost" id="btnCardsReload">重新加载</button>
+            <button class="btn ghost" id="btnCardsClear">清空编辑框</button>
+            <div class="spacer"></div>
+            <div class="muted small" id="cStats"></div>
+          </div>
+          <div class="err-list" id="cErrors" hidden></div>
+        </div>
+        <div class="card">
+          <div class="hint">
+            批量粘贴格式（顺序固定，竖线 <code>|</code> 分隔）：<code>卡号|月份MM|年份YYYY|CVC</code>，例 <code>卡号|MM|YYYY|CVC</code>。<br>
+            年份也接受 2 位（<code>31</code> = 2031）；卡号可用空格或短横线分组（如 <code>卡号 可分 组 输入</code>）。空行和 <code>#</code> 注释行忽略。<br>
+            保存时自动做 <b>Luhn 校验</b>、去重；<b>账号库里已用过的卡会自动跳过</b>（见下方「已用卡」列表），无需手动清理。
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <h2>肥猫猫 Token 池 <span class="badge" id="mailTokCount">0 token</span></h2>
+            <div class="muted small">批量注册收验证码用：每行一个肥猫猫站点登录 token，保存到 <span class="mono">feimao_tokens.txt</span>；多 token 自动轮询、失效自动跳过</div>
+          </div>
+          <textarea id="mailTokText" spellcheck="false" placeholder="每行一个 token（zjkdongao.cn 登录后获取；# 开头为注释）"></textarea>
+          <div class="actions">
+            <button class="btn primary" id="btnMailTokSave">💾 保存 token</button>
+            <button class="btn ghost" id="btnMailTokReload">重新加载</button>
+            <div class="spacer"></div>
+            <div class="muted small" id="mailTokMsg"></div>
+          </div>
+          <table class="tbl" style="margin-top:10px">
+            <thead><tr><th>Token</th><th>状态</th><th>剩余</th><th>最近使用</th></tr></thead>
+            <tbody id="mailTokBody"><tr><td colspan="4" class="empty">未配置 token（游客模式可用，每访客每天约 5 个临时邮箱）</td></tr></tbody>
+          </table>
+          <div class="hint" style="margin-top:10px">
+            游客模式每天约 5 个临时邮箱；配置登录 token 后在账号态创建邮箱（数量按账号配额），<b>多 token 轮询、401/失效自动切换、冷却跳过</b>。<br>
+            自检：<code>node mistral_mailbox.mjs --selftest</code>；加 <code>--create</code> 会真实创建一个邮箱并拉一次邮件（消耗该账号 1 个邮箱配额）。
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <h2>已用卡 <span class="badge" id="usedCount">0</span></h2>
+            <div class="muted small">来自 accounts.json，绑定过账号的卡会自动从可用卡池排除；只展示尾号，完整卡号只在本地</div>
+          </div>
+          <table class="tbl">
+            <thead><tr><th>绑定邮箱</th><th>卡尾号</th><th>有效期</th><th>注册时间</th><th>套餐</th></tr></thead>
+            <tbody id="usedBody"><tr><td colspan="5" class="empty">暂无已用卡</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ================= 账号库 ================= -->
+      <section class="view" id="view-accounts" hidden>
+        <div class="card">
+          <div class="card-head">
+            <h2>账号库 <span class="badge" id="accCount">0</span></h2>
+            <div class="row">
+              <span class="badge" id="vibeNow" title="Vibe 桌面端当前登录账号">Vibe: ?</span>
+              <span class="muted small" id="accMsg"></span>
+              <span class="muted small" id="proMsg"></span>
+              <span class="muted small" id="vibeMsg"></span>
+              <button class="mini" id="btnVibeCheck">🖥 当前 Vibe 账号</button>
+              <button class="mini" id="btnProAll">🧪 检测全部 Pro</button>
+              <button class="mini" id="btnInspectAll">🔍 检测全部账号（有效性+额度）</button>
+              <button class="mini" id="btnAccRefresh">刷新</button>
+              <button class="mini" id="btnAccExport">导出 CSV</button>
+            </div>
+          </div>
+          <table class="tbl">
+            <thead>
+              <tr><th>邮箱</th><th>有效</th><th>套餐</th><th>月度额度</th><th>Tokens(估)</th><th>卡尾号</th><th>注册时间</th><th>会话</th><th>配置文件</th><th></th></tr>
+            </thead>
+            <tbody id="accBody"></tbody>
+          </table>
+        </div>
+        <div class="hint"><b>accounts.json 是唯一账号来源</b>：行内 🔑 登录导出 / 🧪 Pro 检测 / 🔍 体检 / 🖥 Vibe 切换都按邮箱直接从 accounts.json 取账密与会话（不读配置文件）。只读视图：密码与 CVC 不会下发到浏览器。会话「已保存」表示 accounts.json 里存在可复用的登录 cookie。套餐列由 <code>admin.mistral.ai/subscription</code> 实时检测（「检测全部 Pro」或批量注册后自动更新），只有 <b>Pro</b> 账号会标记「已入池」。<br>
+            <b>「检测全部账号」</b>（account_inspect.mjs）在套餐之外额外检测：会话有效性（<code>auth.mistral.ai/sessions/whoami</code> → 「有效/失效」列）、月度额度（<code>chat.mistral.ai/api/trpc/billing.budget</code> → 如 255 EUR 月额度、已用百分比、重置日）、知识库用量（<code>library.getCurrentUsage</code>），结果写回 accounts.json 并生成 inspect_report.json。<br>
+            <b>切换 Vibe 账号</b>：脚本用该账号的邮箱+密码走 OIDC 换取 token，加密写入 Vibe 的 <code>config.json</code>（<code>authOidcTokens</code>），再 <b>关闭并自动重开 Vibe</b> 生效（约 10 秒，当前窗口会一起关闭）。<br>
+            顶部徽章显示 Vibe 现在登录的是哪个账号（解密本地配置读取，不需要 Vibe 在运行）；换号后旧登录态会备份为 <code>config.json.bak-*</code>。</div>
+      </section>
+
+      <!-- ================= 用量看板（反代已并入：GUI 启动即自动开启） ================= -->
+      <section class="view" id="view-usage" hidden>
+        <div class="card">
+          <div class="card-head">
+            <h2>反代状态</h2>
+            <div class="row">
+              <span class="badge" id="proxyState">检测中…</span>
+              <span class="muted small" id="poolMsg">—</span>
+              <button class="mini" id="btnCopyUrl">复制 baseURL</button>
+              <button class="mini" id="btnPoolReload">↻ 重读账号池</button>
+              <button class="mini" id="btnProxyRestart">♻ 重启反代</button>
+              <button class="mini" id="btnProxyStop" disabled>⏹ 停止</button>
+            </div>
+          </div>
+          <div class="actions">
+            <div class="url-box"><span id="proxyUrl">http://127.0.0.1:8899/v1</span></div>
+          </div>
+          <div class="form-grid" style="margin-top:8px">
+            <label class="field">API Key（OpenAI 客户端的 apiKey）
+              <input id="proxyKey" type="text" autocomplete="off" spellcheck="false" placeholder="自定义 key，8-64 位字母数字 . _ -">
+            </label>
+          </div>
+          <div class="actions">
+            <button class="mini" id="btnKeyGen">🎲 随机生成</button>
+            <button class="mini" id="btnKeySave">💾 保存并应用</button>
+            <button class="mini" id="btnKeyCopy">📋 复制 key</button>
+            <span class="muted small" id="keyMsg"></span>
+          </div>
+          <div class="checks">
+            <label class="check"><input type="checkbox" id="pProfileDesktop">以 LeChat-Desktop（Vibe 桌面端）UA 标记发请求</label>
+            <span class="muted small" id="profileMsg"></span>
+          </div>
+          <div class="hint" style="margin-top:12px">
+            <b>GUI 启动即自动开启反代</b>，无需手动启动；「重启反代」用默认配置（config=test_pipe_config.json · 端口 8899）。<br>
+            OpenAI 兼容接口：<code>POST /v1/chat/completions</code> · <code>GET /v1/models</code>；客户端示例
+            <code>new OpenAI({ baseURL: 'http://127.0.0.1:8899/v1', apiKey: '上方保存的 key' })</code>。<br>
+            <b>API key 保存后立即热更新生效</b>（无需重启反代）：<code>/v1/*</code> 请求必须带 <code>Authorization: Bearer &lt;key&gt;</code> 或 <code>x-api-key</code> 头，未带/错误返回 401；不设置 key 时 /v1 不校验。<br>
+            <b>客户端形态</b>：反代与 Vibe 桌面端（le-chat-desktop）发的是<b>同一套 chat.mistral.ai 对话接口</b>（逆向实证：桌面端 UI 就是 le-chat-web 源码，主进程只是转发层）；
+            勾选「桌面端形态」后 UA 会带上桌面端同款标记 <code>LeChat-Desktop/1.6.0 (win32; production; x86_64)</code>，保存立即热生效（<code>client_profile.txt</code>）。<br>
+            多账号池从 accounts.json 读取：<b>Pro 优先轮转，Free 兜底，429 自动冷却切换</b>；批量注册 / 一条龙 / 登录 / 体检完成后自动热更新入池，无需重启。
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <h2>Token 用量统计</h2>
+            <div class="row">
+              <span class="muted small" id="usageMsg">—</span>
+              <button class="mini" id="btnUsageRefresh">刷新</button>
+            </div>
+          </div>
+          <div class="metrics" id="usageStats">
+            <div class="metric"><span class="muted">总请求</span><b id="uReq">–</b></div>
+            <div class="metric"><span class="muted">今日请求</span><b id="uToday">–</b></div>
+            <div class="metric"><span class="muted">新增输入（估）</span><b id="uIn">–</b></div>
+            <div class="metric"><span class="muted">输出（估）</span><b id="uOut">–</b></div>
+            <div class="metric"><span class="muted">合计已用（估）</span><b id="uAll">–</b></div>
+            <div class="metric"><span class="muted">成功/失败</span><b id="uOk">–</b></div>
+          </div>
+          <table class="tbl" style="margin-top:12px">
+            <thead><tr><th>账号</th><th>状态</th><th>请求数</th><th>新增输入</th><th>输出</th><th>合计已用</th><th>缓存命中率</th><th>额度剩余</th></tr></thead>
+            <tbody id="usageBody"><tr><td colspan="8" class="empty">—</td></tr></tbody>
+          </table>
+          <div class="hint" style="margin-top:6px">
+            合计已用 = 新增输入 + 输出（缓存命中上下文不计）；缓存命中率 = 命中输入 / 全部输入（估算）；额度 = accounts.json 体检的月度 budget 剩余（重置日见悬浮提示）。
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <h2>请求记录</h2>
+            <div class="row">
+              <span class="muted small" id="usageReqMsg">—</span>
+              <button class="mini" id="btnUsageReqRefresh">刷新</button>
+            </div>
+          </div>
+          <table class="tbl">
+            <thead><tr><th>时间</th><th>账号</th><th>模型</th><th>新增输入</th><th>输出</th><th>缓存命中</th><th>速度</th><th>思考</th><th>首字</th><th>耗时</th><th>状态</th></tr></thead>
+            <tbody id="usageReqBody"><tr><td colspan="11" class="empty">—</td></tr></tbody>
+          </table>
+          <div class="hint" style="margin-top:6px">
+            每条 /v1/chat/completions 一行（最近 50 条，落盘 usage_stats.json）：
+            新增输入/缓存命中/思考按字符估算（≈字符/4）；速度 = 输出 tokens ÷ 耗时；
+            首字 = live 轮上游首个事件到达耗时；带 tools 的请求会整体缓冲（流式不逐字），计口径相同。
+          </div>
+          <div class="hint" style="margin-top:12px">
+            上游事件流不回传 token 数，用量按字符数估算（≈ 字符/4，响应带 <code>usage_estimated</code> 标记）；
+            每条请求明细落盘 <code>usage_stats.json</code>（保留最近 5000 条），反代重启不丢失；运行中反代优先显示实时数据。
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>反代服务日志</h2></div>
+          <div class="console" id="proxyConsole"></div>
+        </div>
+      </section>
+
+      <!-- ================= 运行日志 ================= -->
+      <section class="view" id="view-logs" hidden>
+        <div class="card">
+          <div class="card-head">
+            <h2>运行日志</h2>
+            <button class="mini" id="btnLogsRefresh">刷新</button>
+          </div>
+          <div class="logs-grid">
+            <div class="log-list" id="logList"></div>
+            <pre class="log-view" id="logView"></pre>
+          </div>
+        </div>
+        <div class="hint">
+          batch_logs/reg_*.log 为每个批量任务的完整输出；汇总结果（batch_results.json）显示在「批量注册 → 本次结果」。
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+<div id="toasts"></div>
+
+<script>
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+
+const state = {
+  accounts: [],
+  configs: [],
+  batch: { taskId: null, es: null, total: 0, ok: 0, fail: 0, pro: 0, nonPro: 0, running: new Set(), t0: 0, timer: null },
+  single: { taskId: null, es: null, action: null },
+  proxy: { taskId: null, es: null, port: 8899 },
+};
+
+const VIEWS = {
+  batch: ['批量注册', '按数量与并发批量跑一条龙（注册 → 地址 → 绑卡 → 兑换）'],
+  cards: ['卡池管理', '维护 cards.txt —— batch_register 会自动收集 cards*.txt'],
+  accounts: ['账号库', 'accounts.json 只读视图（密码与 CVC 不会下发到浏览器）'],
+  usage: ['用量看板', 'Tokens 消耗统计与反代状态 —— 反代随 GUI 启动自动开启（多账号 Pro 优先轮询）'],
+  logs: ['运行日志', 'batch_logs/*.log 与 batch_results.json'],
+};
+
+/* ---------------- 基础 ---------------- */
+function setView(name) {
+  $$('.nav-item').forEach((b) => b.classList.toggle('active', b.dataset.view === name));
+  $$('.view').forEach((v) => { v.hidden = v.id !== 'view-' + name; });
+  const [t, s] = VIEWS[name] || ['', ''];
+  $('#viewTitle').textContent = t;
+  $('#viewSub').textContent = s;
+  if (name === 'accounts') { loadAccounts(); loadVibeStatus(); }
+  if (name === 'logs') loadLogs();
+  if (name === 'cards') { loadCards(); loadMailTokens(); }
+  if (name === 'usage') { loadProxyPool(); loadUsage(); loadProxyKey(); }
+}
+
+async function api(path, opts) {
+  const r = await fetch(path, opts);
+  let j = {};
+  try { j = await r.json(); } catch { /* ignore */ }
+  if (!r.ok) throw new Error(j.error || ('请求失败 (' + r.status + ')'));
+  return j;
+}
+
+const escapeHtml = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmtDate = (s) => { if (!s) return '—'; const d = new Date(s); return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString('zh-CN', { hour12: false }); };
+const fmtBytes = (n) => n > 1048576 ? (n / 1048576).toFixed(1) + ' MB' : n > 1024 ? (n / 1024).toFixed(1) + ' KB' : n + ' B';
+const fmtDur = (sec) => sec >= 60 ? Math.floor(sec / 60) + 'm ' + (sec % 60) + 's' : sec + 's';
+
+function toast(msg, type = 'ok', onClick = null) {
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  if (onClick) {
+    el.style.cursor = 'pointer';
+    el.title = '点击前往';
+    el.addEventListener('click', () => { onClick(); el.remove(); });
+  }
+  $('#toasts').appendChild(el);
+  setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 300); }, onClick ? 6000 : 3200);
+}
+
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); toast('已复制'); }
+  catch {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); toast('已复制'); } catch { toast('复制失败', 'err'); }
+    ta.remove();
+  }
+}
+
+/* ---------------- 总览 ---------------- */
+async function refreshOverview() {
+  try {
+    const o = await api('/api/overview');
+    state.overview = o;
+    $('#statAccounts').textContent = o.accounts;
+    $('#statPro').textContent = o.proAccounts || 0;
+    $('#statCards').textContent = o.cards.pool;
+    $('#statCards').parentElement.title = '卡池可用 ' + o.cards.pool + ' 张；另有 ' + (o.cards.used || 0) + ' 张已在账号库使用、被自动跳过（卡池管理页可编辑 cards.txt）';
+    $('#statTask').textContent = o.running.length ? ('运行中 ' + o.running.length) : '空闲';
+    $('#statTaskDot').className = 'dot' + (o.running.length ? ' on' : '');
+    $('#footNode').textContent = o.env.node;
+    updateBatchHint();
+    if (o.batch && state.batch.taskId !== o.batch.id) {
+      setBatchRunning(true);
+      $('#bPhase').textContent = '注册中…';
+      attachStream('batch', o.batch.id);
+    }
+    if (o.proxy) {
+      if (state.proxy.taskId !== o.proxy.id) attachStream('proxy', o.proxy.id);
+      setProxyUi(true, o.proxy.port || state.proxy.port);
+      if (!$('#view-usage').hidden) loadProxyPool();
+    } else {
+      setProxyUi(false);
+    }
+  } catch { /* 服务未就绪时静默 */ }
+}
+
+function updateBatchHint() {
+  const need = parseInt($('#bCount').value || '5', 10) || 5;
+  const skipCard = $('#bSkipCard').checked;
+  const pool = state.overview ? state.overview.cards.pool : 0;
+  const used = state.overview ? (state.overview.cards.used || 0) : 0;
+  if (skipCard) {
+    $('#bHint').innerHTML = '已勾选<b>跳过绑卡</b>：不绑卡、不需要卡池';
+    return;
+  }
+  const ok = pool >= need;
+  $('#bHint').innerHTML = '需 <b>' + need + '</b> 张卡 · 可用 <b class="' + (ok ? 'c-green' : 'c-red') + '">' + pool + '</b> 张（另有 ' + used + ' 张已用被跳过）';
+  if (!ok) {
+    const a = document.createElement('a');
+    a.href = '#';
+    a.textContent = '去卡池管理 ➜';
+    a.style.color = 'var(--accent)';
+    a.addEventListener('click', (ev) => { ev.preventDefault(); setView('cards'); });
+    $('#bHint').appendChild(document.createTextNode(' · '));
+    $('#bHint').appendChild(a);
+  }
+}
+
+/* ---------------- 控制台 ---------------- */
+const CONSOLE_SEL = { batch: '#batchConsole', single: '#singleConsole', proxy: '#proxyConsole' };
+const consoleEl = (kind) => $(CONSOLE_SEL[kind]);
+
+function clearConsole(kind) {
+  const el = consoleEl(kind);
+  if (el) el.innerHTML = '';
+}
+
+function lineClass(t) {
+  if (/✓|成功/.test(t)) return 'ln ok';
+  if (/✗|失败|\[错误\]|\[ERR\]|Error|错误/i.test(t)) return 'ln err';
+  if (/^\[批量\]|^\[PIPE\]|^\[CFG\]|^\[SAVE\]|^\[池\]|^\[限速\]|^\[切换\]|^\[反代\]/.test(t)) return 'ln sys';
+  return 'ln';
+}
+
+function appendLine(kind, text) {
+  const el = consoleEl(kind);
+  if (!el) return;
+  const div = document.createElement('div');
+  div.className = lineClass(text);
+  div.textContent = text;
+  el.appendChild(div);
+  while (el.childElementCount > 3000) el.firstElementChild.remove();
+  if ($('#chkFollow').checked) el.scrollTop = el.scrollHeight;
+}
+
+/* ---------------- SSE ---------------- */
+function attachStream(kind, id) {
+  const s = state[kind];
+  if (s.es) { try { s.es.close(); } catch { /* ignore */ } s.es = null; }
+  s.taskId = id;
+  const es = new EventSource('/api/tasks/' + encodeURIComponent(id) + '/stream');
+  s.es = es;
+  es.onmessage = (ev) => {
+    let msg;
+    try { msg = JSON.parse(ev.data); } catch { return; }
+    if (msg.type === 'init') {
+      clearConsole(kind);
+      if (kind === 'batch') {
+        resetBatchStats(parseInt($('#bCount').value || '5', 10) || 5);
+        msg.lines.forEach((l) => { appendLine('batch', l); feedBatch(l); });
+      } else {
+        msg.lines.forEach((l) => appendLine(kind, l));
+      }
+      if (msg.status !== 'running') onTaskStatus(kind, msg.status, null);
+    } else if (msg.type === 'line') {
+      appendLine(kind, msg.text);
+      if (kind === 'batch') feedBatch(msg.text);
+    } else if (msg.type === 'status') {
+      onTaskStatus(kind, msg.status, msg.exitCode);
+    }
+  };
+}
+
+function onTaskStatus(kind, status, code) {
+  const s = state[kind];
+  if (s.es) { try { s.es.close(); } catch { /* ignore */ } s.es = null; }
+  const label = { done: '完成', failed: '失败', stopped: '已停止' }[status] || status;
+  if (kind === 'batch') {
+    if (state.batch.timer) { clearInterval(state.batch.timer); state.batch.timer = null; }
+    $('#bPhase').textContent = label + (status === 'done' ? ' ✓' : '');
+    setBatchRunning(false);
+    loadResults();
+    refreshOverview();
+    toast('批量任务' + label, status === 'done' ? 'ok' : 'err');
+    if (status === 'done') {
+      // 注册、反代一体：新账号已由服务端通知反代热更新，前端稍后拉一次池状态
+      setTimeout(() => { if (state.proxy.taskId) loadProxyPool(); }, 1500);
+    }
+  } else if (kind === 'single') {
+    $('#btnSingleStop').disabled = true;
+    toast('任务' + label, status === 'done' ? 'ok' : 'err');
+    if (status === 'done' && ['pipeline', 'login'].includes(state.single.action)) {
+      setTimeout(() => { if (state.proxy.taskId) loadProxyPool(); }, 1500);
+    }
+  } else if (kind === 'proxy') {
+    setProxyUi(false);
+    toast('反代' + label, status === 'done' ? 'ok' : 'err');
+  }
+}
+
+/* ---------------- 批量注册 ---------------- */
+function setBatchRunning(running) {
+  $('#btnBatchStart').disabled = running;
+  $('#btnBatchStop').disabled = !running;
+}
+
+function resetBatchStats(total) {
+  const s = state.batch;
+  s.total = total || (parseInt($('#bCount').value || '5', 10) || 5);
+  s.ok = 0; s.fail = 0; s.pro = 0; s.nonPro = 0; s.running.clear(); s.t0 = Date.now();
+  if (s.timer) clearInterval(s.timer);
+  s.timer = setInterval(renderBatchStats, 1000);
+  renderBatchStats();
+}
+
+function renderBatchStats() {
+  const s = state.batch;
+  $('#mTotal').textContent = s.total || '–';
+  $('#mRun').textContent = s.running.size;
+  $('#mOk').textContent = s.ok;
+  $('#mFail').textContent = s.fail;
+  $('#mPro').textContent = s.pro;
+  $('#mTime').textContent = s.t0 ? fmtDur(Math.round((Date.now() - s.t0) / 1000)) : '–';
+  const done = s.ok + s.fail;
+  const pct = s.total ? Math.min(100, Math.round((done / s.total) * 100)) : 0;
+  $('#bBar').style.width = pct + '%';
+}
+
+function feedBatch(line) {
+  const s = state.batch;
+  let m;
+  if ((m = line.match(/\[批量\] 开始: 注册 (\d+) 个，并发 (\d+)/))) {
+    s.total = Number(m[1]);
+    $('#bPhase').textContent = '注册中 · 并发 ' + m[2];
+  }
+  if (line.includes('Pro 检测:')) {
+    if (line.includes('已入池')) s.pro++;
+    else if (line.includes('未入池')) s.nonPro++;
+  } else if ((m = line.match(/\[任务(\d+)\/W\d+\]/))) {
+    if (line.includes('开始')) s.running.add(m[1]);
+    if (line.includes('✓ 成功')) { s.running.delete(m[1]); s.ok++; }
+    else if (line.includes('✗')) { s.running.delete(m[1]); s.fail++; }
+  }
+  if (line.includes('卡池:')) refreshOverview();
+  renderBatchStats();
+}
+
+async function startBatch() {
+  const params = {
+    count: parseInt($('#bCount').value || '5', 10) || 5,
+    concurrency: parseInt($('#bConc').value || '3', 10) || 3,
+    promo: $('#bPromo').value.trim() || 'MISTRALVIBE',
+    proxy: $('#bProxy').value.trim(),
+    timeout: parseInt($('#bTimeout').value || '1500', 10) || 1500,
+    skipAddress: $('#bSkipAddr').checked,
+    skipCard: $('#bSkipCard').checked,
+    skipRedeem: $('#bSkipRedeem').checked,
+    dryRun: $('#bDry').checked,
+  };
+  try { localStorage.setItem('mistral.batchForm', JSON.stringify(params)); } catch { /* ignore */ }
+  try {
+    const r = await api('/api/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'batch', params }),
+    });
+    clearConsole('batch');
+    resetBatchStats(params.count);
+    $('#bPhase').textContent = '启动中…';
+    setBatchRunning(true);
+    attachStream('batch', r.taskId);
+    toast('批量注册已启动');
+    refreshOverview();
+  } catch (e) {
+    if (/卡池不足/.test(e.message)) toast(e.message + ' —— 点击跳转卡池管理', 'err', () => setView('cards'));
+    else toast(e.message, 'err');
+  }
+}
+
+function restoreBatchForm() {
+  try {
+    const p = JSON.parse(localStorage.getItem('mistral.batchForm') || 'null');
+    if (!p) return;
+    if (p.count) $('#bCount').value = p.count;
+    if (p.concurrency) $('#bConc').value = p.concurrency;
+    if (p.promo) $('#bPromo').value = p.promo;
+    if (p.proxy) $('#bProxy').value = p.proxy;
+    if (p.timeout) $('#bTimeout').value = p.timeout;
+    $('#bSkipAddr').checked = !!p.skipAddress;
+    $('#bSkipCard').checked = !!p.skipCard;
+    $('#bSkipRedeem').checked = !!p.skipRedeem;
+    $('#bDry').checked = !!p.dryRun;
+  } catch { /* ignore */ }
+}
+
+async function loadResults() {
+  try {
+    const r = await api('/api/results');
+    const d = r.data;
+    if (!d || !Array.isArray(d.results) || !d.results.length) { $('#batchResultCard').hidden = true; return; }
+    $('#batchResultCard').hidden = false;
+    $('#bResultMeta').textContent = (d.started_at ? fmtDate(d.started_at) + ' · ' : '') +
+      '成功 ' + d.success + ' / 失败 ' + d.failed + ' · 耗时 ' + d.elapsed_seconds + 's';
+    $('#bResultBody').innerHTML =
+      '<table class="tbl"><thead><tr><th>#</th><th>状态</th><th>套餐</th><th>邮箱</th><th>卡</th><th>配置</th><th>备注</th></tr></thead><tbody>' +
+      d.results.map((x) =>
+        '<tr><td>' + escapeHtml(x.id) + '</td>' +
+        '<td>' + (x.status === 'success' ? '<span class="badge ok">成功</span>' : '<span class="badge bad">失败</span>') + '</td>' +
+        '<td>' + (x.pro === true ? '<span class="badge ok">Pro</span>' : x.pro === false ? '<span class="badge">Free</span>' : '<span class="badge">未检测</span>') + '</td>' +
+        '<td>' + escapeHtml(x.email || '—') + '</td>' +
+        '<td class="mono">' + escapeHtml(x.card || '—') + '</td>' +
+        '<td class="mono small">' + escapeHtml(x.config_file || '—') + '</td>' +
+        '<td class="small">' + escapeHtml(x.error || '') + '</td></tr>'
+      ).join('') + '</tbody></table>';
+  } catch { /* ignore */ }
+}
+
+/* ---------------- 卡池 ---------------- */
+async function loadCards() {
+  try {
+    const c = await api('/api/cards');
+    $('#cText').value = c.content || '';
+    renderCardsStats(c);
+    renderUsedCards(c);
+  } catch (e) { toast(e.message, 'err'); }
+}
+
+function renderUsedCards(c) {
+  const rows = c.usedCards || [];
+  $('#usedCount').textContent = c.used + ' 张卡 / ' + rows.length + ' 个账号';
+  $('#usedBody').innerHTML = rows.length
+    ? rows.map((u) =>
+        '<tr><td>' + escapeHtml(u.email || '—') + '</td>' +
+        '<td class="mono">****' + escapeHtml(u.cardLast4 || '') + '</td>' +
+        '<td class="mono">' + escapeHtml(u.exp || '') + '</td>' +
+        '<td class="small">' + fmtDate(u.registered_at) + '</td>' +
+        '<td>' + (u.pro === true ? '<span class="badge ok">Pro</span>' : u.pro === false ? '<span class="badge">Free</span>' : '<span class="badge">未检测</span>') +
+          (u.in_pool ? ' <span class="small c-green">已入池</span>' : '') + '</td></tr>'
+      ).join('')
+    : '<tr><td colspan="5" class="empty">暂无已用卡</td></tr>';
+}
+
+function renderCardsStats(c) {
+  $('#cStats').innerHTML = '文件内有效 <b class="c-green">' + (c.valid || 0) + '</b> 张 · 无效 <b class="c-red">' + (c.invalid || 0) + '</b> 行 · 重复 <b class="c-yellow">' + (c.dup || 0) + '</b> 行'
+    + (c.pool !== undefined ? ' · <b>可用 ' + c.pool + ' 张</b>（已用 ' + (c.used || 0) + ' 张被自动跳过）' : '');
+  const err = $('#cErrors');
+  if (c.errors && c.errors.length) {
+    err.hidden = false;
+    err.innerHTML = c.errors.map((e) => '第 ' + e.line + ' 行：' + escapeHtml(e.why) + ' <span class="muted">(' + escapeHtml(e.text) + ')</span>').join('<br>');
+  } else {
+    err.hidden = true;
+  }
+}
+
+async function saveCards() {
+  try {
+    const c = await api('/api/cards', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: $('#cText').value }),
+    });
+    $('#cText').value = c.content || '';
+    renderCardsStats(c);
+    renderUsedCards(c);
+    toast('已保存 cards.txt：有效 ' + c.valid + ' 张');
+    refreshOverview();
+  } catch (e) { toast(e.message, 'err'); }
+}
+
+/* ---------------- 肥猫猫 Token 池（注册收验证码邮箱） ---------------- */
+async function loadMailTokens() {
+  try {
+    const t = await api('/api/mail/tokens');
+    $('#mailTokText').value = t.content || '';
+    renderMailTokens(t);
+  } catch (e) { toast(e.message, 'err'); }
+}
+
+function renderMailTokens(t) {
+  const rows = t.tokens || [];
+  $('#mailTokCount').textContent = (t.count || 0) + ' token';
+  $('#mailTokMsg').innerHTML = rows.length
+    ? '已保存 <b class="c-green">' + rows.length + '</b> 个 token' + (t.dup ? ' · 重复 ' + t.dup + ' 行已忽略' : '')
+    : '未配置 token（游客模式可用，每天约 5 个）';
+  $('#mailTokBody').innerHTML = rows.length
+    ? rows.map((r) => {
+        const st = r.invalid
+          ? '<span class="c-red">失效</span>'
+          : (r.cooldownUntil && r.cooldownUntil > Date.now()) ? '<span class="c-yellow">冷却中</span>'
+            : '<span class="c-green">可用</span>';
+        const rem = r.remaining != null ? String(r.remaining) : '—';
+        const used = r.lastUsedAt ? new Date(r.lastUsedAt).toLocaleTimeString('zh-CN', { hour12: false }) : '—';
+        return '<tr><td class="mono">' + escapeHtml(r.mask) + '</td>' +
+          '<td>' + st + (r.lastError ? ' <span class="muted small">' + escapeHtml(String(r.lastError).slice(0, 40)) + '</span>' : '') + '</td>' +
+          '<td class="mono">' + escapeHtml(rem) + '</td>' +
+          '<td class="small">' + escapeHtml(used) + '</td></tr>';
+      }).join('')
+    : '<tr><td colspan="4" class="empty">未配置 token（游客模式可用，每访客每天约 5 个临时邮箱）</td></tr>';
+}
+
+async function saveMailTokens() {
+  try {
+    const t = await api('/api/mail/tokens', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: $('#mailTokText').value }),
+    });
+    $('#mailTokText').value = t.content || '';
+    renderMailTokens(t);
+    toast('已保存 ' + (t.saved ?? t.count ?? 0) + ' 个 token（注册时自动轮询）');
+  } catch (e) { toast(e.message, 'err'); }
+}
+
+/* ---------------- 单卡录入（实时校验） ---------------- */
+const luhn = (num) => {
+  let sum = 0, alt = false;
+  for (let i = num.length - 1; i >= 0; i--) {
+    let d = Number(num[i]);
+    if (alt) { d *= 2; if (d > 9) d -= 9; }
+    sum += d; alt = !alt;
+  }
+  return num.length > 0 && sum % 10 === 0;
+};
+
+function setNcMsg(id, state, text) {
+  const el = $('#' + id);
+  el.textContent = text;
+  el.className = 'small ' + (state === 'ok' ? 'c-green' : state === 'err' ? 'c-red' : 'muted');
+}
+
+function ncValidate() {
+  const num = $('#ncNum').value.replace(/[\s-]/g, '');
+  const mm = $('#ncMM').value.trim();
+  const yy = $('#ncYY').value.trim();
+  const cvc = $('#ncCVC').value.trim();
+  const m = {
+    num: !num ? '' : (/^\d{12,19}$/.test(num) ? (luhn(num) ? 'ok' : 'Luhn 校验未通过') : '卡号需为 12-19 位数字'),
+    mm: !mm ? '' : (/^\d{1,2}$/.test(mm) && +mm >= 1 && +mm <= 12 ? 'ok' : '月份须为 01-12'),
+    yy: !yy ? '' : (/^\d{2}$/.test(yy) || /^\d{4}$/.test(yy) ? 'ok' : '年份须为 2 位（YY）或 4 位（YYYY）'),
+    cvc: !cvc ? '' : (/^\d{3,4}$/.test(cvc) ? 'ok' : 'CVC 须为 3-4 位数字'),
+  };
+  setNcMsg('ncNumMsg', m.num === 'ok' ? 'ok' : m.num ? 'err' : '', m.num === 'ok' ? '✓ Luhn 通过' : m.num);
+  setNcMsg('ncMMMsg', m.mm === 'ok' ? 'ok' : m.mm ? 'err' : '', m.mm === 'ok' ? '✓' : m.mm);
+  setNcMsg('ncYYMsg', m.yy === 'ok' ? 'ok' : m.yy ? 'err' : '', m.yy === 'ok' ? '✓' : m.yy);
+  setNcMsg('ncCVCMsg', m.cvc === 'ok' ? 'ok' : m.cvc ? 'err' : '', m.cvc === 'ok' ? '✓' : m.cvc);
+  return {
+    num, mm, yy, cvc,
+    ok: m.num === 'ok' && m.mm === 'ok' && m.yy === 'ok' && m.cvc === 'ok',
+  };
+}
+
+['ncNum', 'ncMM', 'ncYY', 'ncCVC'].forEach((id) => $('#' + id).addEventListener('input', ncValidate));
+
+async function addSingleCard() {
+  const v = ncValidate();
+  if (!v.ok) { $('#ncMsg').textContent = '请先修正标红的项'; return; }
+  const yyyy = v.yy.length === 2 ? '20' + v.yy : v.yy;
+  const line = `${v.num}|${v.mm.padStart(2, '0')}|${yyyy}|${v.cvc}`;
+  const cur = $('#cText').value;
+  const norm = (s) => s.replace(/[\s-]/g, '');
+  if (cur.split(/\r?\n/).some((l) => norm(l.split('|')[0] || '') === v.num)) {
+    toast('该卡号已在编辑框中（重复卡会被保存时去重）', 'err');
+    return;
+  }
+  $('#cText').value = (cur ? cur.replace(/\n*$/, '') + '\n' : '') + line + '\n';
+  $('#ncMsg').textContent = '已加入，正在保存…';
+  await saveCards();
+  $('#ncNum').value = ''; $('#ncMM').value = ''; $('#ncYY').value = ''; $('#ncCVC').value = '';
+  ncValidate();
+  $('#ncMsg').textContent = '';
+}
+$('#btnNcAdd').addEventListener('click', addSingleCard);
+
+/* ---------------- Pro 检测 ---------------- */
+let proEs = null;
+
+async function runProCheck(scope) {
+  const params = { scope };
+  if (scope === 'config') {
+    params.config = $('#kConfig') && $('#kConfig').value ? $('#kConfig').value : ($('#sConfig') ? $('#sConfig').value : '');
+    if (!params.config) return toast('请先选择配置文件', 'err');
+  }
+  try {
+    const r = await api('/api/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'procheck', params }),
+    });
+    if (proEs) { try { proEs.close(); } catch { /* ignore */ } proEs = null; }
+    $('#proMsg').textContent = '检测中…';
+    proEs = new EventSource('/api/tasks/' + encodeURIComponent(r.taskId) + '/stream');
+    proEs.onmessage = (ev) => {
+      let msg;
+      try { msg = JSON.parse(ev.data); } catch { return; }
+      if (msg.type === 'init') {
+        const last = (msg.lines || []).slice(-1)[0];
+        if (last) $('#proMsg').textContent = last;
+        if (msg.status !== 'running') finishProCheck(msg.status);
+      } else if (msg.type === 'line') {
+        $('#proMsg').textContent = msg.text;
+      } else if (msg.type === 'status') {
+        finishProCheck(msg.status);
+      }
+    };
+  } catch (e) { toast(e.message, 'err'); }
+}
+
+let vibeEs = null;
+
+async function runVibeLogin(params) {
+  const who = params.email ? params.email : ('配置 ' + (params.config || ''));
+  const confirmMsg = [
+    '将把 Vibe 桌面端切换到 ' + who + '：',
+    '',
+    '· 先用账号密码换取 OIDC token',
+    '· 然后关闭 Vibe、写入登录态、自动重开（约 10 秒）',
+    '· 当前窗口会一起关闭；若 GUI 由 Vibe 内部终端启动，重开 Vibe 后需再启动一次 GUI',
+    '',
+    '继续？',
+  ].join(String.fromCharCode(10));
+  if (!confirm(confirmMsg)) return;
+  try {
+    const r = await api('/api/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'vibelogin', params }),
+    });
+    if (vibeEs) { try { vibeEs.close(); } catch { /* ignore */ } vibeEs = null; }
+    $('#vibeMsg').textContent = '切换中…（Vibe 即将关闭并重开）';
+    vibeEs = new EventSource('/api/tasks/' + encodeURIComponent(r.taskId) + '/stream');
+    vibeEs.onmessage = (ev) => {
+      let msg;
+      try { msg = JSON.parse(ev.data); } catch { return; }
+      if (msg.type === 'init') {
+        const last = (msg.lines || []).slice(-1)[0];
+        if (last) $('#vibeMsg').textContent = last;
+        if (msg.status !== 'running') finishVibe(msg.status);
+      } else if (msg.type === 'line') {
+        $('#vibeMsg').textContent = msg.text;
+      } else if (msg.type === 'status') {
+        finishVibe(msg.status);
+      }
+    };
+  } catch (e) { toast(e.message, 'err'); }
+}
+
+function finishVibe(status) {
+  if (vibeEs) { try { vibeEs.close(); } catch { /* ignore */ } vibeEs = null; }
+  const ok = status === 'done';
+  $('#vibeMsg').textContent = ok
+    ? '已发起切换：Vibe 会在几秒内关闭并用新账号重开；重开后点「当前 Vibe 账号」确认'
+    : '切换未完成（' + status + '），详见上方日志';
+  toast(ok ? '已发起切换，Vibe 即将重启' : '切换失败', ok ? 'ok' : 'err');
+}
+
+/* 读取 / 展示 Vibe 当前账号（解密 config.json，不需要 Vibe 在跑） */
+async function loadVibeStatus(showToast) {
+  const el = $('#vibeNow');
+  if (el) { el.textContent = 'Vibe: 读取中…'; el.className = 'badge'; }
+  try {
+    const r = await api('/api/vibe');
+    if (!el) return;
+    if (r.ok && r.email) {
+      el.textContent = 'Vibe: ' + r.email;
+      el.className = 'badge ok';
+      el.title = '登录方式 ' + (r.method || '?') + '｜access 到期 ' + (r.access_exp || '?') + (r.running ? '｜运行中' : '｜未运行');
+      if (showToast) toast('Vibe 当前账号：' + r.email);
+    } else {
+      el.textContent = 'Vibe: 未登录';
+      el.className = 'badge';
+      el.title = r.error || '';
+      if (showToast) toast('读取 Vibe 账号失败：' + (r.error || '未知原因'), 'err');
+    }
+  } catch (e) {
+    if (el) { el.textContent = 'Vibe: ?'; el.className = 'badge'; el.title = e.message; }
+  }
+}
+
+function finishProCheck(status) {
+  if (proEs) { try { proEs.close(); } catch { /* ignore */ } proEs = null; }
+  $('#proMsg').textContent = status === 'done' ? '检测完成' : '检测结束（' + status + '）';
+  loadAccounts();
+  refreshOverview();
+  toast('Pro 检测' + (status === 'done' ? '完成' : '结束'), status === 'done' ? 'ok' : 'err');
+}
+
+/* ---------------- 账号库 ---------------- */
+async function loadAccounts() {
+  try {
+    // 账号列表与反代 token 用量并行拉取，任一失败不影响另一个；用量优先取运行中反代的实时数据
+    const [accRes, usageRes] = await Promise.allSettled([api('/api/accounts'), api('/api/usage')]);
+    if (accRes.status === 'rejected') throw accRes.reason;
+    const r = accRes.value;
+    const u = usageRes.status === 'fulfilled' ? usageRes.value : null;
+    const liveProxy = u?.live?.proxies?.find((p) => p.reachable && p.total);
+    const usageByAcc = (liveProxy || u?.file || {}).byAccount || {};
+    state.accounts = r.accounts;
+    $('#accCount').textContent = r.accounts.length;
+    $('#accBody').innerHTML = r.accounts.length
+      ? r.accounts.map((a) => {
+          const validBadge = a.valid === true
+            ? '<span class="badge ok">有效</span>'
+            : a.valid === false
+              ? '<span class="badge bad">失效</span>'
+              : '<span class="badge">未检</span>';
+          const validTitle = a.valid_checked_at ? ' title="检测于 ' + escapeHtml(fmtDate(a.valid_checked_at)) + '（whoami）"' : '';
+          let budgetTxt = '—';
+          if (a.budget) {
+            const ib = Number(a.budget.initial_budget);
+            const ub = Number(a.budget.used_budget);
+            // 剩余额度小数位基线与 used_budget 一致；差值本身带小数（如 8.5-0）时取较大值（上限 2，货币精度），避免 8.5 被圆整成 9
+            const ubDec = (String(a.budget.used_budget ?? '').split('.')[1] || '').length;
+            const diffClean = Number((ib - ub).toFixed(4));
+            const diffDec = (String(diffClean).split('.')[1] || '').length;
+            const remainDec = Math.min(2, Math.max(ubDec, diffDec));
+            if (Number.isFinite(ib) && Number.isFinite(ub)) {
+              budgetTxt = '总额 ' + escapeHtml(String(a.budget.initial_budget)) + (a.budget.currency ? ' ' + escapeHtml(a.budget.currency) : '')
+                + ' · 已用 ' + escapeHtml(String(a.budget.used_budget))
+                + ' · 剩余 ' + escapeHtml(diffClean.toFixed(remainDec))
+                + (a.budget.usage_percentage != null ? ' <span class="muted">(' + escapeHtml(String(a.budget.usage_percentage)) + '%)</span>' : '');
+            } else {
+              budgetTxt = escapeHtml(`${a.budget.used_budget ?? '?'}/${a.budget.initial_budget ?? '?'}${a.budget.currency || ''}`)
+                + (a.budget.usage_percentage != null ? ' · ' + escapeHtml(String(a.budget.usage_percentage)) + '%' : '');
+            }
+            if (a.budget.reset_at) budgetTxt += ' <span class="muted small">' + escapeHtml(String(a.budget.reset_at).slice(0, 10)) + '重置</span>';
+          }
+          const budgetTitle = a.quota_checked_at ? ' title="额度检测于 ' + escapeHtml(fmtDate(a.quota_checked_at)) + '（billing.budget）' : (a.budget ? '' : ' title="尚未体检额度，点 🔍 检测"');
+          const usageAcc = usageByAcc[a.email];
+          const tokTxt = usageAcc && usageAcc.estTotalTokens != null ? fmtNum(usageAcc.estTotalTokens) : '—';
+          return '<tr><td>' + escapeHtml(a.email || '—') + '</td>' +
+          '<td' + validTitle + '>' + validBadge + '</td>' +
+          '<td>' + (a.pro === true ? '<span class="badge ok">Pro</span>' : a.pro === false ? '<span class="badge">Free</span>' : '<span class="badge">未检测</span>') +
+            (a.in_pool ? ' <span class="small c-green">已入池</span>' : '') + '</td>' +
+          '<td class="small"' + budgetTitle + '>' + budgetTxt + '</td>' +
+          '<td class="mono" title="反代 token 用量（字符估算，运行中反代优先）">' + tokTxt + '</td>' +
+          '<td class="mono">' + (a.cardLast4 ? '****' + escapeHtml(a.cardLast4) : '—') + '</td>' +
+          '<td class="small">' + fmtDate(a.registered_at) + '</td>' +
+          '<td>' + (a.session ? '<span class="badge ok">已保存</span>' : '<span class="badge">无</span>') + '</td>' +
+          '<td class="mono small">' + escapeHtml(a.config_file || '—') + '</td>' +
+          '<td><button class="mini" data-copy="' + escapeHtml(a.email || '') + '">复制</button> ' +
+            '<button class="mini" data-login="' + escapeHtml(a.email || '') + '" title="从 accounts.json 取账密登录并导出 cookie">🔑 登录</button> ' +
+            '<button class="mini" data-pro="' + escapeHtml(a.email || '') + '" title="检测该账号套餐（从 accounts.json 取会话）">🧪 Pro</button> ' +
+            '<button class="mini" data-inspect="' + escapeHtml(a.email || '') + '" title="体检该账号：会话有效性 + 套餐 + 月度额度 + 知识库用量">🔍 体检</button> ' +
+            '<button class="mini" data-vibe="' + escapeHtml(a.email || '') + '">🖥 Vibe</button></td></tr>';
+        }).join('')
+      : '<tr><td colspan="10" class="empty">暂无账号</td></tr>';
+  } catch (e) { toast(e.message, 'err'); }
+}
+
+$('#accBody').addEventListener('click', (e) => {
+  const copyBtn = e.target.closest('button[data-copy]');
+  if (copyBtn) return copyText(copyBtn.dataset.copy);
+  const loginBtn = e.target.closest('button[data-login]');
+  if (loginBtn && loginBtn.dataset.login) return runAccountTask('login', loginBtn.dataset.login);
+  const proBtn = e.target.closest('button[data-pro]');
+  if (proBtn && proBtn.dataset.pro) return runAccountTask('procheck', proBtn.dataset.pro);
+  const inspectBtn = e.target.closest('button[data-inspect]');
+  if (inspectBtn && inspectBtn.dataset.inspect) return runInspect('account', inspectBtn.dataset.inspect);
+  const vibeBtn = e.target.closest('button[data-vibe]');
+  if (vibeBtn && vibeBtn.dataset.vibe) runVibeLogin({ email: vibeBtn.dataset.vibe });
+});
+
+/* ---------------- 账号体检（有效性+套餐+额度） ---------------- */
+let inspectEs = null;
+
+async function runInspect(scope, email) {
+  const params = { scope };
+  if (scope === 'account' && email) params.email = email;
+  if (inspectEs) { try { inspectEs.close(); } catch { /* ignore */ } inspectEs = null; }
+  $('#accMsg').textContent = '体检中…' + (email ? ' ' + email : '（全部账号）');
+  try {
+    const r = await api('/api/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'inspect', params }),
+    });
+    inspectEs = new EventSource('/api/tasks/' + encodeURIComponent(r.taskId) + '/stream');
+    inspectEs.onmessage = (ev) => {
+      let msg;
+      try { msg = JSON.parse(ev.data); } catch { return; }
+      if (msg.type === 'init') {
+        const last = (msg.lines || []).slice(-1)[0];
+        if (last) $('#accMsg').textContent = last;
+        if (msg.status !== 'running') finishInspect(msg.status);
+      } else if (msg.type === 'line') {
+        $('#accMsg').textContent = msg.text;
+      } else if (msg.type === 'status') {
+        finishInspect(msg.status);
+      }
+    };
+  } catch (e) { $('#accMsg').textContent = ''; toast(e.message, 'err'); }
+}
+
+function finishInspect(status) {
+  if (inspectEs) { try { inspectEs.close(); } catch { /* ignore */ } inspectEs = null; }
+  $('#accMsg').textContent = status === 'done' ? '体检完成' : '体检结束（' + status + '）';
+  loadAccounts();
+  refreshOverview();
+  toast('账号体检' + (status === 'done' ? '完成' : '结束'), status === 'done' ? 'ok' : 'err');
+}
+
+/* 账号行操作：全部按邮箱从 accounts.json 取账密/会话（--account / --email） */
+let accEs = null;
+function runAccountTask(action, email) {
+  const params = action === 'login' ? { email } : { scope: 'account', email };
+  if (accEs) { try { accEs.close(); } catch { /* ignore */ } accEs = null; }
+  $('#accMsg').textContent = (action === 'login' ? '登录导出' : 'Pro 检测') + '：' + email + ' …';
+  api('/api/run', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action, params }),
+  }).then((r) => {
+    accEs = new EventSource('/api/tasks/' + encodeURIComponent(r.taskId) + '/stream');
+    accEs.onmessage = (ev) => {
+      let msg;
+      try { msg = JSON.parse(ev.data); } catch { return; }
+      if (msg.type === 'init') {
+        const last = (msg.lines || []).slice(-1)[0];
+        if (last) $('#accMsg').textContent = last;
+        if (msg.status !== 'running') finishAccTask(msg.status);
+      } else if (msg.type === 'line') {
+        $('#accMsg').textContent = msg.text;
+      } else if (msg.type === 'status') {
+        finishAccTask(msg.status);
+      }
+    };
+  }).catch((e2) => { $('#accMsg').textContent = ''; toast(e2.message, 'err'); });
+}
+
+function finishAccTask(status) {
+  if (accEs) { try { accEs.close(); } catch { /* ignore */ } accEs = null; }
+  $('#accMsg').textContent = status === 'done' ? '完成' : '结束（' + status + '）';
+  loadAccounts();
+  refreshOverview(); // login/procheck 成功时服务端已自动通知反代热更新账号池
+  toast('账号任务' + (status === 'done' ? '完成' : '结束'), status === 'done' ? 'ok' : 'err');
+}
+
+function exportAccountsCsv() {
+  const rows = state.accounts;
+  if (!rows.length) return toast('没有可导出的账号', 'err');
+  const head = 'email,first,last,registered_at,card_last4,config_file,session_saved,pro,pro_plan,in_pool,valid,budget_used,budget_total,budget_currency,budget_reset_at\n';
+  const body = rows.map((a) =>
+    [a.email, a.first, a.last, a.registered_at, a.cardLast4, a.config_file, a.session, a.pro, a.pro_plan, a.in_pool, a.valid,
+     a.budget ? a.budget.used_budget : '', a.budget ? a.budget.initial_budget : '', a.budget ? a.budget.currency : '', a.budget ? a.budget.reset_at : '']
+      .map((v) => '"' + String(v ?? '').replace(/"/g, '""') + '"').join(',')
+  ).join('\n');
+  const blob = new Blob([head + body], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'accounts.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+/* ---------------- 配置 ---------------- */
+async function loadConfigs() {
+  try {
+    const r = await api('/api/configs');
+    state.configs = r.configs;
+    const opts = r.configs.map((c) =>
+      '<option value="' + escapeHtml(c.file) + '">' + escapeHtml(c.file) + (c.email ? ' — ' + escapeHtml(c.email) : '') + '</option>'
+    ).join('');
+    $('#sConfig').innerHTML = opts;
+    $('#kConfig').innerHTML = opts;
+    const lastS = localStorage.getItem('mistral.singleConfig');
+    if (lastS && r.configs.some((c) => c.file === lastS)) $('#sConfig').value = lastS;
+    const lastK = localStorage.getItem('mistral.cardConfig');
+    if (lastK && r.configs.some((c) => c.file === lastK)) $('#kConfig').value = lastK;
+    loadCardConfig();
+  } catch { /* ignore */ }
+}
+
+/* ---------------- 卡号 / 配置编辑 ---------------- */
+async function loadCardConfig() {
+  const file = $('#kConfig').value;
+  if (!file) return;
+  try {
+    const r = await api('/api/config/detail?file=' + encodeURIComponent(file));
+    const c = r.config || {};
+    $('#kNumber').value = c.card?.number || '';
+    $('#kMonth').value = c.card?.exp_month || '';
+    $('#kYear').value = c.card?.exp_year || '';
+    $('#kCvc').value = c.card?.cvc || '';
+    $('#kFirst').value = c.first || '';
+    $('#kLast').value = c.last || '';
+    $('#kPromo').value = c.promo_code || 'MISTRALVIBE';
+    $('#cardMsg').textContent = '已载入 ' + file + (c.email ? '（账号 ' + c.email + '）' : '');
+  } catch (e) {
+    $('#cardMsg').textContent = '';
+    toast(e.message, 'err');
+  }
+}
+
+async function saveCardConfig() {
+  const file = $('#kConfig').value;
+  if (!file) return toast('请先选择配置文件', 'err');
+  const patch = {
+    first: $('#kFirst').value.trim(),
+    last: $('#kLast').value.trim(),
+    promo_code: $('#kPromo').value.trim(),
+  };
+  const num = $('#kNumber').value.replace(/\s|-/g, '');
+  if (num) {
+    patch.card = {
+      number: num,
+      exp_month: $('#kMonth').value.trim(),
+      exp_year: $('#kYear').value.trim(),
+      cvc: $('#kCvc').value.trim(),
+    };
+  }
+  try {
+    const r = await api('/api/config/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ file, patch }),
+    });
+    localStorage.setItem('mistral.cardConfig', file);
+    toast('已保存 ' + file);
+    loadCardConfig();
+  } catch (e) {
+    toast(e.message, 'err');
+  }
+}
+
+/* ---------------- 单账号 ---------------- */
+async function startSingle(action) {
+  const params = { config: $('#sConfig').value };
+  state.single.action = action;
+  if (action === 'pipeline') {
+    params.proxy = $('#sProxy').value.trim();
+    params.open = $('#sOpen').checked;
+  }
+  if (action === 'login') {
+    params.proxy = $('#sProxy').value.trim();
+    params.open = $('#sOpen').checked;
+    params.fresh = $('#sFresh').checked;
+  }
+  try {
+    localStorage.setItem('mistral.singleConfig', params.config || '');
+  } catch { /* ignore */ }
+  try {
+    const r = await api('/api/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, params }),
+    });
+    clearConsole('single');
+    attachStream('single', r.taskId);
+    $('#btnSingleStop').disabled = false;
+    toast('任务已启动');
+  } catch (e) { toast(e.message, 'err'); }
+}
+
+/* ---------------- 反代（随 GUI 启动自动开启；此处仅状态与控制） ---------------- */
+function setProxyUi(running, port) {
+  if (port) state.proxy.port = port;
+  // 外部启动的反代（非本 GUI 任务，无 taskId）只能看状态，不能由本 GUI 停止
+  $('#btnProxyStop').disabled = !running || !state.proxy.taskId;
+  $('#proxyState').textContent = running ? (state.proxy.taskId ? '运行中' : '运行中（外部实例）') : '已停止';
+  $('#proxyState').className = 'badge' + (running ? ' ok' : '');
+  $('#proxyUrl').textContent = 'http://127.0.0.1:' + state.proxy.port + '/v1';
+}
+
+async function startProxy() {
+  try {
+    const r = await api('/api/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      // 空参数走后端默认: config=test_pipe_config.json · 端口 8899 · 全量池
+      body: JSON.stringify({ action: 'proxy', params: {} }),
+    });
+    clearConsole('proxy');
+    state.proxy.taskId = r.taskId;
+    attachStream('proxy', r.taskId);
+    setProxyUi(true, 8899);
+    toast('反代已启动');
+    loadProxyPool();
+  } catch (e) { toast(e.message, 'err'); }
+}
+
+async function restartProxy() {
+  // 先停当前反代（如由本 GUI 管理），等端口释放后按默认配置重启
+  if (state.proxy.taskId) {
+    try {
+      await api('/api/tasks/' + encodeURIComponent(state.proxy.taskId) + '/stop', { method: 'POST' });
+    } catch (e) { toast(e.message, 'err'); return; }
+    toast('正在停止旧反代，1.5s 后重启…');
+    state.proxy.taskId = null;
+    await new Promise((res) => setTimeout(res, 1500));
+  }
+  startProxy();
+}
+
+/* ---------------- 反代状态（池摘要） ---------------- */
+async function loadProxyPool() {
+  try {
+    const r = await api('/api/proxy/pool');
+    const p = (r.proxies || [])[0];
+    if (!p) {
+      setProxyUi(false);
+      $('#poolMsg').textContent = '反代未运行（点「♻ 重启反代」立即启动）';
+      return;
+    }
+    if (!p.reachable) {
+      setProxyUi(true, p.port);
+      $('#poolMsg').textContent = '端口 ' + (p.port || '?') + ' 启动中…';
+      return;
+    }
+    if (p.taskId) {
+      // 后端自启的反代任务： takeover 日志流 + 让「停止」「重启」按钮可用
+      if (state.proxy.taskId !== p.taskId) attachStream('proxy', p.taskId);
+      state.proxy.taskId = p.taskId;
+    }
+    setProxyUi(true, p.port);
+    $('#poolMsg').textContent = '端口 ' + p.port + ' · 池 ' + p.total
+      + '（Pro ' + (p.proCount ?? '?') + ' / Free ' + (p.freeCount ?? '?') + '）'
+      + ' · 冷却 ' + (p.blocked || 0) + (p.proOnly ? ' · 仅 Pro' : '');
+  } catch { /* ignore */ }
+}
+
+async function reloadProxyPool() {
+  if (!state.proxy.taskId) return toast('反代未运行', 'err');
+  try {
+    await api('/api/proxy/reload', { method: 'POST' });
+    toast('已通知反代重读账号池');
+    setTimeout(loadProxyPool, 600);
+  } catch (e) { toast(e.message, 'err'); }
+}
+
+/* ---------------- 反代 API key（自定义，热更新） ---------------- */
+async function loadProxyKey() {
+  try {
+    const r = await api('/api/proxy/key');
+    $('#proxyKey').value = r.key || '';
+    if (!r.key) $('#keyMsg').textContent = '未设置（/v1 不校验；点「保存并应用」生成）';
+    else $('#keyMsg').textContent = '已生效（/v1/* 需带此 key，401=未带/错误）';
+    const p = await api('/api/proxy/profile');
+    $('#pProfileDesktop').checked = p.profile === 'desktop';
+    $('#profileMsg').textContent = p.profile === 'desktop' ? '当前：桌面端形态' : '当前：网页端形态（默认）';
+  } catch { /* ignore */ }
+}
+
+async function saveProfile(desktop) {
+  try {
+    const r = await api('/api/proxy/profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ profile: desktop ? 'desktop' : 'web' }),
+    });
+    $('#profileMsg').textContent = r.profile === 'desktop' ? '当前：桌面端形态（已热生效）' : '当前：网页端形态（已热生效）';
+    toast('客户端形态已切换并热生效');
+  } catch (e) { toast(e.message, 'err'); }
+}
+
+async function saveProxyKey(generate) {
+  const custom = $('#proxyKey').value.trim();
+  if (!generate && custom && !/^[A-Za-z0-9._-]{8,64}$/.test(custom)) {
+    $('#keyMsg').textContent = 'key 需为 8-64 位，仅限字母、数字和 . _ -';
+    return toast('key 格式不合法', 'err');
+  }
+  try {
+    const r = await api('/api/proxy/key', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(generate || !custom ? { generate: true } : { key: custom }),
+    });
+    $('#proxyKey').value = r.key;
+    $('#keyMsg').textContent = r.generated ? '已随机生成并热更新生效' : '已保存并热更新生效';
+    toast(r.generated ? '已生成新 key（旧 key 立即失效）' : 'key 已保存并生效');
+  } catch (e) { toast(e.message, 'err'); }
+}
+
+/* ---------------- 反代 token 用量统计 ---------------- */
+const fmtNum = (n) => Number(n || 0).toLocaleString('en-US');
+const fmtMs = (ms) => !ms ? '—' : (ms >= 1000 ? (ms / 1000).toFixed(1) + 's' : ms + 'ms');
+const fmtTime = (ts) => { try { return new Date(ts).toLocaleTimeString('zh-CN', { hour12: false }); } catch { return String(ts || '').slice(11, 19); } };
+
+async function loadUsage() {
+  try {
+    const r = await api('/api/usage');
+    // 优先展示运行中反代的实时 /admin/usage，否则用落盘文件聚合
+    const live = (r.live?.proxies || []).find((p) => p.reachable && p.total);
+    const src = live || r.file || {};
+    const t = src.total || {};
+    const td = src.today || {};
+    $('#uReq').textContent = fmtNum(t.requests);
+    $('#uToday').textContent = fmtNum(td.requests || 0);
+    $('#uIn').textContent = fmtNum(t.estNewInputTokens);
+    $('#uOut').textContent = fmtNum(t.estCompletionTokens);
+    $('#uAll').textContent = fmtNum(t.estBilledTokens);
+    $('#uOk').textContent = fmtNum(t.ok) + ' / ' + fmtNum(t.errors);
+    $('#usageMsg').textContent = (live
+      ? '实时 · 端口 ' + live.port
+      : (r.file?.source ? 'usage_stats.json · ' + r.file.records + ' 条记录' : '暂无数据')) + ' · 字符估算';
+    // 账号报表明细
+    const byAcc = src.byAccount || {};
+    const rows = Object.entries(byAcc).sort((a, b) => (b[1].estBilledTokens || 0) - (a[1].estBilledTokens || 0));
+    $('#usageBody').innerHTML = rows.length
+      ? rows.map(([email, a]) => {
+          const pct = a.estPromptTokens > 0 ? Math.round(100 * (a.estCachedTokens || 0) / a.estPromptTokens) : null;
+          const st = a.blockedFor > 0
+            ? '<span class="mono c-red">冷却 ' + a.blockedFor + 's</span>'
+            : '<span class="mono c-green">可用</span>';
+          const quota = a.budget
+            ? '<span class="mono" title="重置 ' + (a.budget.resetAt || '').slice(0, 10) + '">' + (a.budget.currency === 'EUR' ? '€' : '') + Number(a.budget.remaining || 0).toFixed(2) + '</span>'
+            : '<span class="muted">—</span>';
+          return '<tr><td>' + escapeHtml(email) + (a.pro ? ' <span class="muted small">[Pro]</span>' : '') + '</td>' +
+            '<td>' + st + '</td>' +
+            '<td class="mono">' + fmtNum(a.requests) + '</td>' +
+            '<td class="mono">' + fmtNum(a.estNewInputTokens) + '</td>' +
+            '<td class="mono">' + fmtNum(a.estCompletionTokens) + '</td>' +
+            '<td class="mono">' + fmtNum(a.estBilledTokens) + '</td>' +
+            '<td class="mono">' + (pct == null ? '—' : pct + '%') + '</td>' +
+            '<td>' + quota + '</td></tr>';
+        }).join('')
+      : '<tr><td colspan="8" class="empty">暂无用量记录（跑几次 /v1/chat/completions 后再看）</td></tr>';
+    // 请求记录（逐请求明细）
+    const recent = (src.recent || []).slice(-50).reverse();
+    $('#usageReqMsg').textContent = recent.length + ' 条 · ' + (live ? '实时' : '落盘');
+    $('#usageReqBody').innerHTML = recent.length
+      ? recent.map((rec) => {
+          const sec = rec.elapsedMs > 0 ? rec.elapsedMs / 1000 : 0;
+          const speed = sec > 0 && rec.ok ? (Number(rec.estCompletionTokens || 0) / sec).toFixed(1) + ' t/s' : '—';
+          const errShort = rec.error ? escapeHtml(String(rec.error).slice(0, 18)) : '';
+          return '<tr><td class="mono">' + fmtTime(rec.ts) + '</td>' +
+            '<td>' + escapeHtml(rec.account || '未知') + '</td>' +
+            '<td>' + escapeHtml(rec.model || '—') + '</td>' +
+            '<td class="mono">' + fmtNum(rec.estNewInputTokens) + '</td>' +
+            '<td class="mono">' + fmtNum(rec.estCompletionTokens) + '</td>' +
+            '<td class="mono">' + fmtNum(rec.estCachedTokens) + '</td>' +
+            '<td class="mono">' + speed + '</td>' +
+            '<td class="mono">' + (rec.estReasoningTokens > 0 ? fmtNum(rec.estReasoningTokens) : '<span class="muted">—</span>') + '</td>' +
+            '<td class="mono">' + fmtMs(rec.ttftMs) + '</td>' +
+            '<td class="mono">' + fmtMs(rec.elapsedMs) + '</td>' +
+            '<td>' + (rec.ok ? '<span class="c-green">成功</span>' : '<span class="c-red" title="' + escapeHtml(String(rec.error || '')) + '">失败</span>' + (errShort ? ' <span class="muted small">' + errShort + '</span>' : '')) + '</td></tr>';
+        }).join('')
+      : '<tr><td colspan="11" class="empty">暂无请求记录</td></tr>';
+  } catch { /* ignore */ }
+}
+$('#btnUsageReqRefresh').addEventListener('click', loadUsage);
+
+/* ---------------- 日志 ---------------- */
+async function loadLogs() {
+  try {
+    const r = await api('/api/logs');
+    $('#logList').innerHTML = r.logs.length
+      ? r.logs.map((l) =>
+          '<button class="log-item" data-name="' + escapeHtml(l.name) + '">' +
+          '<span>' + escapeHtml(l.name) + '</span>' +
+          '<span class="muted small">' + fmtBytes(l.size) + ' · ' + fmtDate(l.mtime) + '</span></button>'
+        ).join('')
+      : '<div class="empty">暂无日志</div>';
+  } catch (e) { toast(e.message, 'err'); }
+}
+
+async function openLog(name) {
+  try {
+    const r = await api('/api/logs/' + encodeURIComponent(name));
+    $('#logView').textContent = r.content || '(空)';
+    $$('.log-item').forEach((b) => b.classList.toggle('active', b.dataset.name === name));
+  } catch (e) { toast(e.message, 'err'); }
+}
+
+$('#logList').addEventListener('click', (e) => {
+  const b = e.target.closest('.log-item');
+  if (b) openLog(b.dataset.name);
+});
+
+/* ---------------- 事件绑定 ---------------- */
+$$('.nav-item').forEach((b) => b.addEventListener('click', () => setView(b.dataset.view)));
+
+$('#bCount').addEventListener('input', updateBatchHint);
+$('#bSkipCard').addEventListener('change', updateBatchHint);
+$('#btnBatchStart').addEventListener('click', startBatch);
+$('#btnBatchStop').addEventListener('click', async () => {
+  if (!state.batch.taskId) return;
+  try {
+    await api('/api/tasks/' + encodeURIComponent(state.batch.taskId) + '/stop', { method: 'POST' });
+    toast('已发送停止信号');
+  } catch (e) { toast(e.message, 'err'); }
+});
+$('#btnClear').addEventListener('click', () => clearConsole('batch'));
+$('#btnRefreshResult').addEventListener('click', loadResults);
+
+$('#btnCardsSave').addEventListener('click', saveCards);
+$('#btnMailTokSave').addEventListener('click', saveMailTokens);
+$('#btnMailTokReload').addEventListener('click', loadMailTokens);
+$('#btnCardsReload').addEventListener('click', loadCards);
+$('#btnCardsClear').addEventListener('click', () => { $('#cText').value = ''; renderCardsStats({ valid: 0, invalid: 0, dup: 0, errors: [] }); });
+
+$('#btnAccRefresh').addEventListener('click', loadAccounts);
+$('#btnVibeCheck').addEventListener('click', () => loadVibeStatus(true));
+$('#btnProAll').addEventListener('click', () => runProCheck('all'));
+$('#btnInspectAll').addEventListener('click', () => runInspect('all'));
+$('#btnProOne').addEventListener('click', () => runProCheck('config'));
+$('#btnVibeOne').addEventListener('click', () => {
+  const cfg = $('#kConfig') && $('#kConfig').value ? $('#kConfig').value : ($('#sConfig') ? $('#sConfig').value : '');
+  if (!cfg) return toast('请先选择配置文件', 'err');
+  runVibeLogin({ config: cfg });
+});
+$('#btnAccExport').addEventListener('click', exportAccountsCsv);
+
+$('#btnCardSave').addEventListener('click', saveCardConfig);
+$('#btnCardLoad').addEventListener('click', loadCardConfig);
+$('#kConfig').addEventListener('change', loadCardConfig);
+
+$('#btnPipe').addEventListener('click', () => startSingle('pipeline'));$('#btnLogin').addEventListener('click', () => startSingle('login'));
+$('#btnRetest').addEventListener('click', () => startSingle('retest'));
+$('#btnSingleStop').addEventListener('click', async () => {
+  if (!state.single.taskId) return;
+  try {
+    await api('/api/tasks/' + encodeURIComponent(state.single.taskId) + '/stop', { method: 'POST' });
+    toast('已发送停止信号');
+  } catch (e) { toast(e.message, 'err'); }
+});
+
+$('#btnProxyRestart').addEventListener('click', restartProxy);
+$('#btnProxyStop').addEventListener('click', async () => {
+  if (!state.proxy.taskId) return;
+  try {
+    await api('/api/tasks/' + encodeURIComponent(state.proxy.taskId) + '/stop', { method: 'POST' });
+    toast('已发送停止信号');
+  } catch (e) { toast(e.message, 'err'); }
+});
+$('#btnCopyUrl').addEventListener('click', () => copyText($('#proxyUrl').textContent));
+$('#btnPoolReload').addEventListener('click', reloadProxyPool);
+$('#btnKeyGen').addEventListener('click', async () => { await saveProxyKey(true); });
+$('#btnKeySave').addEventListener('click', async () => { await saveProxyKey(false); });
+$('#btnKeyCopy').addEventListener('click', () => copyText($('#proxyKey').value || ''));
+$('#pProfileDesktop').addEventListener('change', (e) => saveProfile(e.target.checked));
+$('#btnUsageRefresh').addEventListener('click', loadUsage);
+
+$('#btnLogsRefresh').addEventListener('click', loadLogs);
+
+/* ---------------- 启动 ---------------- */
+(async function init() {
+  restoreBatchForm();
+  setView('batch');
+  updateBatchHint();
+  await Promise.allSettled([refreshOverview(), loadConfigs(), loadCards(), loadAccounts(), loadLogs()]);
+  await loadResults();
+  setInterval(refreshOverview, 5000);
+  setInterval(() => { if (!$('#view-usage').hidden) { loadUsage(); loadProxyPool(); } }, 5000);
+})();
+</script>
+</body>
+</html>

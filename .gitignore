@@ -1,0 +1,34 @@
+# ---- 依赖 ----
+node_modules/
+
+# ---- 账号资产（含密码 / 会话 cookie / 额度，勿提交）----
+accounts.json
+cookies/
+
+# ---- 卡池 / 注册配置（含卡号、会话 cookie）----
+cards*.txt
+retest_cards.txt
+mistral_config.json
+test_fresh_config.json
+test_pipe_config.json
+*_config.json
+proxy_key.txt
+
+# ---- 运行产物与统计 ----
+usage_stats.json
+batch_results.json
+inspect_report.json
+pro_report.json
+batch_configs/
+batch_logs/
+feimao_tokens.txt
+feimao_tokens_state.json
+vibe_login_last.json
+*.log
+
+# ---- 系统与编辑器 ----
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/
+.idea/

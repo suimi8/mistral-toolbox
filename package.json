@@ -1,0 +1,14 @@
+{
+  "name": "mistral",
+  "version": "1.0.0",
+  "description": "Mistral 控制台：批量注册 + 账号库 + 对话反代 + Hub 聚合网关（单 UI）",
+  "main": "gui.mjs",
+  "scripts": {
+    "gui": "node gui.mjs",
+    "start": "node gui.mjs"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "undici": "^8.13.1"
+  }
+}
